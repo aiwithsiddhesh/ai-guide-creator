@@ -6,11 +6,12 @@ authors = [{ name = "Your Name", email = "you@example.com" }]
 requires-python = ">=3.10,<3.14"
 dependencies = [
     "crewai[anthropic,tools]==1.14.4",
-    "crewai-tools>=1.14.4",
+    "crewai-tools==1.14.4",
     "python-dotenv>=1.2.2",
     "requests>=2.34.2",
     "voyageai>=0.4.1",
     "youtube-transcript-api>=1.2.4",
+    "firecrawl-py>=1.0.0",
 ]
 
 [project.scripts]

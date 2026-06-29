@@ -1,17 +1,98 @@
-research_task:
+analyse_youtube_sources:
   description: >
-    Conduct a thorough research about {topic}
-    Make sure you find any interesting and relevant information given
-    the current year is {current_year}.
-  expected_output: >
-    A list with 10 bullet points of the most relevant information about {topic}
-  agent: researcher
+    Fetch and analyse the transcripts for each YouTube URL in this list: {youtube_links}.
 
-reporting_task:
-  description: >
-    Review the context you got and expand each topic into a full section for a report.
-    Make sure the report is detailed and contains any and all relevant information.
+    For each video produce one clearly labelled section containing:
+    - All shell commands or code snippets, quoted verbatim
+    - Key concepts introduced and a one-sentence definition of each
+    - Any errors shown and the exact fix demonstrated
+    - The video URL
+
+    If a video's transcript is disabled or unavailable, write a section noting the URL
+    and the reason it could not be processed.
   expected_output: >
-    A fully fledged report with the main topics, each with a full section of information.
-    Formatted as markdown without '```'
-  agent: reporting_analyst
+    Markdown document. One H2 section per video URL. Sections for inaccessible videos
+    clearly marked "## [INACCESSIBLE] <url>". No prose filler — only extracted facts.
+  agent: youtube_analyst
+
+scrape_web_sources:
+  description: >
+    Scrape and analyse each web page in this list: {webpage_links}.
+
+    For each page produce one clearly labelled section containing:
+    - Installation or setup steps (numbered, verbatim)
+    - All API references or configuration options mentioned
+    - Code samples (fenced code blocks, language tagged)
+    - Version numbers and compatibility notes
+    - The page URL
+
+    If a page cannot be scraped (bot-blocked, 404, timeout), write a section noting the
+    URL and the reason.
+  expected_output: >
+    Markdown document. One H2 section per URL. Inaccessible pages marked
+    "## [INACCESSIBLE] <url>". Code in fenced blocks. No invented content.
+  agent: web_researcher
+
+analyse_research_papers:
+  description: >
+    Retrieve and analyse each research paper in this list: {research_paper_links}.
+
+    For each paper produce one clearly labelled section containing:
+    - Paper title and authors (verbatim)
+    - The problem the paper solves (1–2 sentences)
+    - Methodology summary (3–5 bullet points)
+    - All benchmark numbers and evaluation results quoted verbatim from the paper
+    - Practical takeaway for a developer (1–2 sentences)
+
+    If a paper cannot be retrieved, note the URL and reason.
+  expected_output: >
+    Markdown document. One H2 section per paper. Benchmark tables reproduced exactly.
+    No paraphrasing of numerical results.
+  agent: academic_analyst
+
+process_documents:
+  description: >
+    Read and extract technical content from each local file in this list: {document_paths}.
+
+    For each file produce one clearly labelled section containing:
+    - All code blocks (fenced, language tagged if determinable)
+    - All configuration tables or key-value lists
+    - All numbered setup or installation steps
+    - All API definitions or function signatures
+    - The file path
+
+    If a file cannot be read or is truncated (exceeds size limit), note the path and reason.
+  expected_output: >
+    Markdown document. One H2 section per file path. Code quoted exactly — never
+    paraphrased. Truncated files noted with how many bytes were read.
+  agent: document_analyst
+
+compile_research_report:
+  description: >
+    You have received research sections from specialist analysts. Merge them into one
+    unified research report organised by concept, not by source.
+
+    Report structure:
+    1. ## Overview — what the topic is and the problem it solves (2–3 sentences)
+    2. ## Installation & Setup — consolidated install steps from all sources
+    3. ## Core Concepts — one subsection per major concept; cite which source introduced it
+    4. ## Code Examples — all distinct working examples; label each with its source
+    5. ## Advanced Topics — anything beyond beginner scope; clearly labelled as advanced
+    6. ## Sources — bullet list of every URL and file path successfully processed
+    7. ## Sources Not Accessible — bullet list of every URL/path that failed, with reason
+
+    Rules:
+    - Never fabricate information not present in the specialist reports
+    - When sources contradict each other, note the contradiction and both versions
+    - Preserve all code blocks exactly as received
+    - Every claim must be traceable to a source in ## Sources
+  expected_output: >
+    A single Markdown document following the seven-section structure above. Minimum 500
+    words. All code in fenced blocks. ## Sources and ## Sources Not Accessible sections
+    present even if empty.
+  agent: research_director
+  context:
+    - analyse_youtube_sources
+    - scrape_web_sources
+    - analyse_research_papers
+    - process_documents

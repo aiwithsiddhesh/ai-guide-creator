@@ -51,11 +51,4 @@ Three crews run in sequence:
 2. **Enrichment Crew** — runs targeted gap-fill web searches if the research quality score is below threshold. Skipped otherwise.
 3. **Writing Crew** — produces the guide through a four-step pipeline: outline → full draft → beginner review → final edit.
 
-After the guide is generated, launch the student chatbot:
-
-```python
-from guide_creator_flow.chatbot import launch_chatbot
-launch_chatbot("<run_id>")
-```
-
-The chatbot answers questions grounded in the guide and original sources only. It cites which section or source each answer comes from, and says so explicitly when a question is not covered by the material.
+After the guide is generated, a student chatbot can be launched against the same material. It answers questions grounded in the guide and original sources only, cites which section or source each answer comes from, and says so explicitly when a question is not covered by the material.

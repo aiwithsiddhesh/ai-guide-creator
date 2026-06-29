@@ -758,6 +758,24 @@ wheels = [
 ]
 
 [[package]]
+name = "firecrawl-py"
+version = "4.30.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "httpx" },
+    { name = "nest-asyncio" },
+    { name = "pydantic" },
+    { name = "python-dotenv" },
+    { name = "requests" },
+    { name = "websockets" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c0/e3/3d7e6d66585c82f3b48c8299423df6b69a2d906ffb5594af17f7ae7d4665/firecrawl_py-4.30.3.tar.gz", hash = "sha256:d5629dfda605453275883f6339abc5601aaa3f3d849041c297e840d63a7dc450", size = 198968, upload-time = "2026-06-25T11:22:22.448Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2d/fc/07f5eec1634c640eaf0dfa18026ce7509f3ff344f4a698ff4ae6f1c72083/firecrawl_py-4.30.3-py3-none-any.whl", hash = "sha256:3f997cadd6b20a98906ffc49d4f5b0ace6fa5f11986e3bd4f18aa882d649e4c6", size = 248067, upload-time = "2026-06-25T11:22:20.956Z" },
+]
+
+[[package]]
 name = "flatbuffers"
 version = "25.12.19"
 source = { registry = "https://pypi.org/simple" }
@@ -942,8 +960,7 @@ source = { editable = "." }
 dependencies = [
     { name = "crewai", extra = ["anthropic", "tools"] },
     { name = "crewai-tools" },
-    { name = "pre-commit" },
-    { name = "pytest" },
+    { name = "firecrawl-py" },
     { name = "python-dotenv" },
     { name = "requests" },
     { name = "voyageai" },
@@ -952,15 +969,16 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "openai" },
+    { name = "pre-commit" },
     { name = "pytest" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "crewai", extras = ["anthropic", "tools"], specifier = "==1.14.4" },
-    { name = "crewai-tools", specifier = ">=1.14.4" },
-    { name = "pre-commit", specifier = ">=4.6.0" },
-    { name = "pytest", specifier = ">=9.1.1" },
+    { name = "crewai-tools", specifier = "==1.14.4" },
+    { name = "firecrawl-py", specifier = ">=1.0.0" },
     { name = "python-dotenv", specifier = ">=1.2.2" },
     { name = "requests", specifier = ">=2.34.2" },
     { name = "voyageai", specifier = ">=0.4.1" },
@@ -968,7 +986,11 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "pytest", specifier = ">=9.1.1" }]
+dev = [
+    { name = "openai", specifier = ">=1.0.0" },
+    { name = "pre-commit", specifier = ">=4.6.0" },
+    { name = "pytest", specifier = ">=9.1.1" },
+]
 
 [[package]]
 name = "h11"
@@ -1878,6 +1900,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/ac/5b/2d2d1d522e51285bd61b1e20df8f47ae1a9d80839db0b24ea783b3832832/multidict-6.7.1-cp313-cp313t-win_amd64.whl", hash = "sha256:d54ecf9f301853f2c5e802da559604b3e95bb7a3b01a9c295c6ee591b9882de8", size = 53109, upload-time = "2026-01-26T02:45:08.044Z" },
     { url = "https://files.pythonhosted.org/packages/3d/a3/cc409ba012c83ca024a308516703cf339bdc4b696195644a7215a5164a24/multidict-6.7.1-cp313-cp313t-win_arm64.whl", hash = "sha256:5a37ca18e360377cfda1d62f5f382ff41f2b8c4ccb329ed974cc2e1643440118", size = 45573, upload-time = "2026-01-26T02:45:09.349Z" },
     { url = "https://files.pythonhosted.org/packages/81/08/7036c080d7117f28a4af526d794aab6a84463126db031b007717c1a6676e/multidict-6.7.1-py3-none-any.whl", hash = "sha256:55d97cc6dae627efa6a6e548885712d4864b81110ac76fa4e534c03819fa4a56", size = 12319, upload-time = "2026-01-26T02:46:44.004Z" },
+]
+
+[[package]]
+name = "nest-asyncio"
+version = "1.6.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/83/f8/51569ac65d696c8ecbee95938f89d4abf00f47d58d48f6fbabfe8f0baefe/nest_asyncio-1.6.0.tar.gz", hash = "sha256:6f172d5449aca15afd6c646851f4e31e02c598d553a667e38cafa997cfec55fe", size = 7418, upload-time = "2024-01-21T14:25:19.227Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a0/c4/c2971a3ba4c6103a3d10c4b0f24f461ddc027f0f09763220cf35ca1401b3/nest_asyncio-1.6.0-py3-none-any.whl", hash = "sha256:87af6efd6b5e897c81050477ef65c62e2b2f35d51703cae01aff2905b1852e1c", size = 5195, upload-time = "2024-01-21T14:25:17.223Z" },
 ]
 
 [[package]]
