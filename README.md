@@ -23,6 +23,11 @@ ANTHROPIC_API_KEY=     # all LLM calls
 FIRECRAWL_API_KEY=     # JS-rendered page scraping
 SERPER_API_KEY=        # gap-fill web search
 VOYAGE_API_KEY=        # embeddings for knowledge and memory
+OPENAI_API_KEY=        # crewai test evaluator only — not used at runtime
+
+DOCUMENT_INPUT_DIR=inputs       # local files must be under this directory
+MAX_FILE_BYTES=52428800         # 50 MB default — files above this are rejected
+CREWAI_STORAGE_DIR=.crewai      # LanceDB storage root for knowledge and memory
 ```
 
 ## Usage
