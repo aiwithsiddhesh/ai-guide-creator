@@ -21,3 +21,14 @@ jobs:
 
       - name: Run tests
         run: uv run pytest
+
+      # Quality signal only — not a gate. crewai test uses an LLM judge (gpt-4o-mini)
+      # to evaluate guide quality. Skipped when secrets are absent; continue-on-error
+      # keeps it non-blocking until the eval rubric is stable enough to gate on.
+      - name: Run LLM quality eval (optional)
+        if: ${{ secrets.OPENAI_API_KEY != '' && secrets.ANTHROPIC_API_KEY != '' }}
+        continue-on-error: true
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: crewai test --n_iterations 1 --model gpt-4o-mini

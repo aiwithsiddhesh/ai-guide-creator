@@ -51,6 +51,10 @@ Output is written to `outputs/<run_id>/`:
 - `research_report.md` — reusable research; can be passed directly to the chatbot
 - `metadata.json` — topic, source types, quality score, word count, error log, document paths
 
+## Testing
+
+See [TESTING.md](TESTING.md) for the test strategy and how to run the suite.
+
 ## How it works
 
 Three crews run in sequence:
