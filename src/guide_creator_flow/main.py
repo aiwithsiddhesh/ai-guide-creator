@@ -277,6 +277,9 @@ class GuideGeneratorFlow(Flow[GuideFlowState]):
             "word_count": self.state.guide_word_count,
             "error_log": self.state.error_log,
             "state_id": str(self.state.id) if hasattr(self.state, "id") else "",
+            "document_paths": [
+                str(Path(p).resolve()) for p in self.state.document_paths
+            ],
         }
         (out_dir / "metadata.json").write_text(
             json.dumps(metadata, indent=2), encoding="utf-8"

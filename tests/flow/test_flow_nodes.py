@@ -111,6 +111,50 @@ def test_validate_inputs_rejects_path_traversal():
     assert any("path traversal" in e for e in flow.state.error_log)
 
 
+# ---------------------------------------------------------------------------
+# save_outputs — metadata.json completeness
+# ---------------------------------------------------------------------------
+
+def test_save_outputs_writes_document_paths(tmp_path, monkeypatch):
+    """document_paths must be persisted to metadata.json so the chatbot can reload PDFs."""
+    # Change cwd so save_outputs writes "outputs/test_run/" inside tmp_path.
+    monkeypatch.chdir(tmp_path)
+
+    fake_pdf1 = tmp_path / "guide.pdf"
+    fake_pdf2 = tmp_path / "notes.pdf"
+    fake_pdf1.write_bytes(b"%PDF-1.4")
+    fake_pdf2.write_bytes(b"%PDF-1.4")
+
+    flow = GuideGeneratorFlow()
+    flow.state.run_id = "test_run"
+    flow.state.topic_hint = "Testing"
+    flow.state.source_types = ["document"]
+    flow.state.research_quality_score = 8
+    flow.state.guide_word_count = 100
+    flow.state.error_log = []
+    flow.state.final_guide = "# Guide\n\nContent."
+    flow.state.research_report = "# Report\n\nFindings."
+    flow.state.document_paths = [str(fake_pdf1), str(fake_pdf2)]
+
+    flow.save_outputs()
+
+    # save_outputs creates Path("outputs") / run_id relative to cwd
+    out_dir = tmp_path / "outputs" / "test_run"
+
+    import json as _json
+    metadata = _json.loads((out_dir / "metadata.json").read_text())
+
+    assert "document_paths" in metadata, "document_paths key missing from metadata.json"
+    assert len(metadata["document_paths"]) == 2
+    # Paths are resolved to absolute; verify originals appear as substrings.
+    stored = metadata["document_paths"]
+    assert any("guide.pdf" in p for p in stored), f"guide.pdf not found in {stored}"
+    assert any("notes.pdf" in p for p in stored), f"notes.pdf not found in {stored}"
+    # Must be absolute paths (so chatbot can load them from any cwd).
+    for p in stored:
+        assert Path(p).is_absolute(), f"Expected absolute path, got: {p}"
+
+
 def test_validate_inputs_rejects_oversized_file():
     with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
         f.write(b"x" * 100)

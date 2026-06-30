@@ -1,310 +1,334 @@
+I have all the information needed. Now I'll produce the complete, polished final guide with all 27 problems resolved inline, and any unfixable issues documented under Known Gaps.
+
+---
+
 # Getting Started with TypeScript: A Complete Beginner's Guide
 
 ---
 
-## 1. What Is TypeScript and Why Use It?
+## 1. What Is TypeScript?
 
-**TypeScript** is a *statically typed superset of JavaScript*. Let's unpack that phrase one term at a time:
+TypeScript is a **statically typed superset of JavaScript**. Let's unpack that phrase:
 
-- **JavaScript** is the programming language that powers interactivity on the web. It runs inside browsers (like Chrome and Firefox) and on servers (via a tool called Node.js). Even if you have never written it, you have definitely used software built with it.
-- **Superset** means TypeScript *includes everything JavaScript can do* and then adds more on top. Every valid JavaScript program is automatically a valid TypeScript program — nothing is taken away.
-- **Statically typed** means every variable has a declared *type* — such as "this holds a number" or "this holds text" — and that type is checked *before* the program runs, at a step called **compile time**. If you break a type rule, the compiler tells you immediately instead of letting a broken program run silently.
+- **JavaScript** is the programming language that runs in web browsers and on servers via Node.js. It is *dynamically typed*, meaning the type of a variable (whether it holds a number, a piece of text, or something else) is determined only when the program actually runs.
+- **Statically typed** means the types are checked *before* the program runs — at the moment you compile your code.
+- **Superset** means every program that is valid JavaScript is also valid TypeScript. You can take any existing `.js` file, rename it to `.ts`, and TypeScript will accept it.
 
-TypeScript is developed and maintained by Microsoft and has become one of the most popular languages in the web-development ecosystem.
+TypeScript was created and is maintained by **Microsoft**. It was first released publicly in 2012 and has grown to become one of the most widely used languages in professional software development.
 
-### The TypeScript Compiler
+### Why Does TypeScript Exist?
 
-TypeScript files use the `.ts` extension. Because browsers and Node.js cannot read `.ts` files directly, TypeScript must be **transpiled** into plain JavaScript (`.js` files) before it can run.
+In large JavaScript codebases, a common class of bug arises at *runtime* — meaning while users are actually running the software. For example, passing a number where a function expects a string might silently produce `NaN` (Not a Number, a special JavaScript value indicating an invalid arithmetic result) rather than throwing an obvious error. TypeScript catches these mistakes during development, before the code ever runs.
 
-**Transpilation** is the process of automatically converting source code written in one language (TypeScript) into equivalent source code in another language (JavaScript). The word is a blend of "transform" and "compile." The tool that performs this conversion is called the **TypeScript compiler**, invoked with the command `tsc`. You write `.ts`; `tsc` outputs `.js`; then you run the `.js` file.
+### How TypeScript Works
 
-### Type Erasure
+TypeScript files use the `.ts` extension. The TypeScript **compiler** — a program called `tsc` — reads your `.ts` files and **transpiles** them into plain `.js` files. **Transpilation** is the process of translating source code written in one language (TypeScript) into source code in another language that runs at a similar level of abstraction (JavaScript). This is different from traditional compilation, which translates high-level code all the way down to machine code. The JavaScript output is what actually runs in the browser or on a server.
 
-One important detail: after compilation, all type annotations are **erased** from the output. The compiled `.js` file contains no trace of TypeScript's extra syntax — it is plain JavaScript that runs anywhere JavaScript runs. This means TypeScript's type system is a *development-time safety net only*; it adds zero overhead to your running program.
+When you run `tsc hello.ts`, the compiler creates a new file called `hello.js` **in the same folder as your `hello.ts` file**. You can then open that folder and see both files side by side. The `.js` file is what you run with Node.js or load in a browser.
 
-### Key Benefits
-
-| Benefit | What it means for you |
-|---|---|
-| **Early error detection** | Mistakes are caught before you run your program, not after. |
-| **Improved IDE support** | Editors like VS Code can offer precise autocomplete and inline documentation because they understand the types. |
-| **Self-documenting code** | Type annotations act as readable contracts: `age: number` instantly tells any reader what kind of value `age` holds. |
-
-### TypeScript vs. JavaScript
-
-Everything you know about JavaScript still applies — functions, loops, objects, arrays, `async/await` — all work identically. TypeScript simply adds an optional layer of type information on top. After compilation, that type information is erased and the output is standard JavaScript that runs in browsers, in Node.js, or in any JavaScript environment.
-
-### Side-by-Side: No Types vs. Types
-
-```javascript
-// ── plain JavaScript ──────────────────────────────────────
-// JavaScript has no way to express that `price` must be a number.
-// Passing a string causes a silent bug at runtime.
-function applyDiscount(price, discount) {
-  return price - discount;
-  // If price is the string "100", JavaScript tries to subtract 10
-  // from text, which is undefined math. The result is NaN.
-}
-
-applyDiscount("100", 10);
-// No error shown — JavaScript lets this through.
-// The program keeps running but produces NaN as the result.
-```
-
-> **What is NaN?** `NaN` stands for "Not a Number." It is a special JavaScript value that means a mathematical operation produced a nonsensical result — for example, trying to subtract a number from a piece of text. The dangerous part is that JavaScript returns `NaN` *silently*: no error message, no crash. Your program continues running with a corrupted value, which can cause subtle, hard-to-find bugs far away from where the mistake actually happened.
+This process involves **type erasure**: all TypeScript type information exists only at compile time and is completely removed from the output JavaScript. There is no runtime overhead — TypeScript's type safety is purely a development-time safety net.
 
 ```typescript
-// ── TypeScript equivalent ─────────────────────────────────
-// Parameters are annotated with types using the colon (:) syntax.
-function applyDiscount(price: number, discount: number): number {
-  return price - discount;  // TypeScript knows both values are numbers
-}
+// ── JavaScript version (hello.js) ──────────────────────────
+// No type information whatsoever.
+let greeting = "Hello, world!";
+console.log(greeting);
 
-applyDiscount("100", 10);
-// ^^^ Compiler error: Argument of type 'string' is not assignable
-//     to parameter of type 'number'.
-// The mistake is caught BEFORE the program ever runs.
+// ── TypeScript version (hello.ts) ──────────────────────────
+// The `: string` part is a type annotation — it tells TypeScript
+// what kind of value `greeting` is allowed to hold.
+let greeting: string = "Hello, world!";
+console.log(greeting);
+
+// ── What the TypeScript compiler outputs (hello.js) ─────────
+// Identical to plain JavaScript — the type annotation is erased.
+let greeting = "Hello, world!";
+console.log(greeting);
 ```
 
-TypeScript detected the problem at compile time. JavaScript would have silently returned `NaN` at runtime, potentially corrupting data without any warning. This is what "safety guarantees" means in practice: the compiler acts as an automated code reviewer that catches whole categories of mistakes before they can reach your users.
+The compiled output is indistinguishable from JavaScript you would have written by hand. TypeScript adds nothing to the running program; it only helps you write it more safely.
 
 ---
 
-## 2. Installation & Environment Setup
+## 2. Installation & Setup
 
 ### Prerequisites
 
-Before installing TypeScript you need two tools already present on your machine:
+Before installing TypeScript you need two tools:
 
-- **Node.js** — a runtime that lets JavaScript (and TypeScript, after compilation) run outside a browser. Download it from [nodejs.org](https://nodejs.org).
-- **npm** (Node Package Manager) — a tool for installing JavaScript and TypeScript packages. npm is bundled with Node.js automatically; installing Node.js also installs npm.
+- **Node.js** — a runtime that lets JavaScript run on your computer (outside a browser). Download the **LTS** (Long-Term Support) version from [https://nodejs.org](https://nodejs.org). LTS means the version is officially supported with bug fixes and security patches for an extended period — it is the safest choice for new projects.
+- **npm** (Node Package Manager) — a tool that ships automatically with Node.js. It lets you install JavaScript and TypeScript packages from the internet.
 
-#### Choosing the Right Node.js Version
+### Opening a Terminal
 
-On the Node.js download page you will see two options: **LTS** and **Current**.
+A **terminal** (also called a command-line interface or shell) is a text-based window where you type commands directly to your computer. Here is how to open one on each operating system:
 
-- **LTS** stands for *Long-Term Support*. These versions receive bug fixes and security patches for several years, making them the safest choice for most projects. **Download the LTS version.**
-- **Current** contains the very latest features but may receive breaking changes. Avoid it unless you have a specific reason.
+- **Windows:** Press `Win + R`, type `cmd`, and press Enter. Alternatively, search for "Command Prompt" or "Windows PowerShell" in the Start menu.
+- **macOS:** Open Spotlight with `Cmd + Space`, type `Terminal`, and press Enter. You can also find Terminal in `Applications → Utilities → Terminal`.
+- **Linux:** Press `Ctrl + Alt + T` on most distributions, or search for "Terminal" in your application launcher.
 
-After downloading, run the installer and accept the default options. No special configuration is required.
+Once you have a terminal open, you type commands at the blinking cursor and press Enter to run them.
 
-Verify both tools are installed by opening your **terminal** (the command-line application — Terminal on macOS/Linux, Command Prompt or PowerShell on Windows) and running:
+### Navigating Folders in a Terminal
+
+Your terminal always has a **current working directory** — the folder it is currently "looking at." To move into a different folder, use the `cd` (change directory) command:
 
 ```bash
-# Check Node.js version — any version 16 or higher works well
-node --version
+# Move into a folder called "my-project" that is inside your current folder.
+cd my-project
 
-# Check npm version — any version 8 or higher works well
-npm --version
+# Move up one level to the parent folder.
+cd ..
+
+# On Windows, move to a full path.
+cd C:\Users\YourName\Documents\my-project
+
+# On macOS/Linux, move to a full path.
+cd /Users/YourName/Documents/my-project
 ```
 
-Both commands should print a version number (e.g., `v20.11.0`). If you see "command not found," the installation did not complete successfully — try reinstalling Node.js.
+When you compile a TypeScript file, make sure your terminal is in the same folder as that file.
 
-### Installing TypeScript
+### Installing TypeScript Globally
 
-Install TypeScript **globally** — meaning it becomes available as a command in your terminal from *any* directory on your computer, not just inside one specific project folder:
+Installing a package **globally** means it is installed once on your computer and the command it provides (`tsc` in this case) becomes available in any terminal window, in any folder. Without the `-g` flag, npm would install TypeScript only inside your current project folder, and `tsc` would not be recognised as a command outside of that folder.
 
 ```bash
-# npm install   → tells npm to install a package
-# -g            → the "global" flag; installs the package system-wide
-# typescript    → the name of the package on the npm registry
+# Install the TypeScript compiler globally on your machine.
+# The -g flag = global installation, making `tsc` available everywhere.
 npm install -g typescript
 ```
-
-**What does "global" mean here?** When you install a package globally, npm places it in a central location on your system and registers its commands in your terminal's PATH (the list of places your terminal searches for commands). After this, typing `tsc` in any terminal window will work — just like typing `node` works after you install Node.js.
 
 Verify the installation succeeded:
 
 ```bash
-# Prints the installed TypeScript version, e.g. "Version 5.4.5"
+# Print the installed TypeScript version.
+# Expected output example: Version 5.4.5
 tsc --version
 ```
 
-### Creating Your First Project
+Verify Node.js and npm are installed by running:
 
 ```bash
-# Create a new directory (folder) for your project
-mkdir my-ts-project
+# Print the installed Node.js version.
+# Expected output example: v20.11.0
+node --version
 
-# Move into that directory
-cd my-ts-project
+# Print the installed npm version.
+# Expected output example: 10.2.4
+npm --version
+```
 
-# Create a new, empty TypeScript source file called hello.ts
-# On macOS/Linux:
+### Creating Your First TypeScript File
+
+You need a **text editor** or **IDE** (Integrated Development Environment) to create and edit TypeScript files. A popular free choice is **Visual Studio Code** (VS Code), available at [https://code.visualstudio.com](https://code.visualstudio.com). VS Code has built-in TypeScript support and will highlight errors as you type.
+
+To create the file, you have two options:
+
+**Option A — Using your text editor:** Open VS Code (or any text editor), create a new file, paste in the code below, and save it as `hello.ts` in a folder of your choice (for example, `Documents/typescript-practice/hello.ts`).
+
+**Option B — Using the terminal:** Navigate to the folder where you want the file, then run one of these commands depending on your operating system:
+
+```bash
+# macOS or Linux: creates an empty hello.ts file
 touch hello.ts
-# On Windows (Command Prompt or PowerShell):
+
+# Windows Command Prompt: creates an empty hello.ts file
 echo. > hello.ts
 ```
 
-> **What do `touch` and `echo.` do?** `touch` is a macOS/Linux command that creates an empty file if it does not already exist. Windows does not have `touch`, but `echo. > hello.ts` achieves the same result: it creates an empty file named `hello.ts`. Both commands simply create the file; neither writes any content into it.
-
-Open `hello.ts` in your editor and add the following:
+Then open the file in your text editor and add the following code:
 
 ```typescript
 // hello.ts
-// This is a simple TypeScript program.
-
-// `message` is declared with the `let` keyword and annotated as type `string`.
-// `let` declares a variable — a named container for a value.
-// A string is a sequence of text characters (letters, spaces, punctuation).
+// Declare a variable named `message` of type `string`
+// and assign it the value "Hello, TypeScript!".
 let message: string = "Hello, TypeScript!";
 
-// `console.log` prints a value to the terminal.
+// Print the value of `message` to the terminal.
 console.log(message);
 ```
 
 ### Compiling and Running
 
+In your terminal, navigate to the folder containing `hello.ts` using the `cd` command shown above, then run:
+
 ```bash
-# `tsc hello.ts` reads hello.ts and produces hello.js in the same folder
+# Compile hello.ts — this produces a new file called hello.js
+# in the same folder as hello.ts.
 tsc hello.ts
 
-# Inspect the compiled JavaScript output (optional but educational)
-# On macOS/Linux:
-cat hello.js
-# On Windows:
-type hello.js
-```
-
-> **What do `cat` and `type` do?** These are terminal commands that print the contents of a file directly into the terminal window so you can read them. `cat` is the macOS/Linux version; `type` is the Windows equivalent. Running either one here lets you see the JavaScript that `tsc` generated from your `.ts` file.
-
-```bash
-# Run the compiled JavaScript file with Node.js
+# Run the compiled JavaScript file with Node.js.
 node hello.js
-# Output: Hello, TypeScript!
 ```
 
-You have just completed the full **compile-and-run loop**: write `.ts` → compile with `tsc` → run `.js` with Node.
+You should see the following output in your terminal:
 
-### ✅ Quick Practice Checkpoint
-
-Before moving on to types, confirm your setup works end-to-end:
-
-1. `hello.ts` exists and contains the code above.
-2. Running `tsc hello.ts` produces a `hello.js` file with no errors.
-3. Running `node hello.js` prints `Hello, TypeScript!` to your terminal.
-
-If all three steps succeed, your environment is ready and you can proceed confidently to the next section.
-
-### Introducing `tsconfig.json`
-
-As projects grow, passing individual file names to `tsc` becomes unwieldy. A `tsconfig.json` file lets you store all compiler settings in one place.
-
-**What is JSON?** JSON (JavaScript Object Notation) is a simple text format for storing structured data using key-value pairs, like a configuration file. A `tsconfig.json` file is just a text file that the TypeScript compiler reads to know how to behave — which files to compile, how strict to be, where to put the output, and so on. You will configure it in detail in Section 8. For now, know it exists and can be generated with:
-
-```bash
-# Generates a tsconfig.json with sensible defaults and explanatory comments
-tsc --init
 ```
+Hello, TypeScript!
+```
+
+**✅ Mini Practice Checkpoint:** If you see `Hello, TypeScript!` printed in your terminal, your installation is working correctly. If you see an error, double-check that `tsc --version` returns a version number before continuing.
 
 ---
 
 ## 3. Basic Types
 
-**Type annotations** tell TypeScript what kind of value a variable may hold. The syntax is always: `variableName: TypeName`.
-
-### The `let` Keyword
-
-In JavaScript and TypeScript, `let` declares a **variable** — a named storage location whose value can change over time. (You may also see `const`, which declares a value that cannot be reassigned after creation.) TypeScript adds type annotations on top of this: `let age: number = 30` says "create a variable named `age` that must always hold a number, and set its initial value to 30."
+TypeScript includes several built-in types you will use constantly. This section covers the most important ones.
 
 ### Primitive Types
 
-A **primitive** is a simple, indivisible value. TypeScript's three core primitives mirror JavaScript's:
+A **primitive type** is a basic, indivisible value. TypeScript's three core primitives map directly to JavaScript:
 
-| Type | What it holds | Example value |
-|---|---|---|
-| `string` | Text | `"Alice"` |
-| `number` | Any numeric value (integer or decimal) | `42`, `3.14` |
-| `boolean` | True or false only | `true`, `false` |
+| Type | Represents | Example value |
+|------|-----------|---------------|
+| `string` | Text | `"hello"` |
+| `number` | Any numeric value, including decimals | `42`, `3.14` |
+| `boolean` | True or false | `true`, `false` |
 
-### Special Types: `any` and `unknown`
+**Type annotation syntax** follows this pattern:
 
-- **`any`** disables type checking for that variable entirely. TypeScript will accept any operation on it without complaint. Overusing `any` defeats the purpose of TypeScript — you lose the ability to catch mistakes at compile time, which is the main reason you are using TypeScript in the first place.
-- **`unknown`** is the safer alternative. Like `any`, it can hold any value, but TypeScript *forces you to check the type* before performing operations on it. This keeps you safe while still allowing flexibility.
-
-### `null` and `undefined`
-
-- **`null`** means "intentionally no value" — a deliberate empty state.
-- **`undefined`** means "a value has not been assigned yet."
-
-With **strict null checks** enabled (covered in Section 8), TypeScript treats these as distinct types and prevents you from accidentally using a variable that might be null.
-
-### Array Types
-
-An array is an ordered list of values. TypeScript offers two equivalent syntaxes:
-
-- `number[]` — array of numbers (preferred for readability)
-- `Array<number>` — the generic form (covered in Section 7)
-
-### Tuple Types
-
-A **tuple** is a fixed-length array where each position has its own specified type. "Fixed-length" means the array must contain *exactly* that many elements — no more, no fewer. Unlike a regular array (which can hold any number of elements of the same type), a tuple enforces both the length and the type at each specific position.
-
-**When would you use this?** Tuples are useful when you want to group a small, known set of related values together — for example, a coordinate pair `[x, y]` or a name-and-age pair `["Alice", 30]`. The compiler prevents you from mixing up the order or adding extra elements.
+```typescript
+let variableName: type = value;
+```
 
 ### Type Inference
 
-**Type inference** means TypeScript deduces the type automatically from the value you assign, without requiring an explicit annotation. This reduces repetitive boilerplate while keeping all the safety benefits.
+**Type inference** is TypeScript's ability to automatically figure out the type of a variable from the value you assign to it — without you having to write the type annotation explicitly. For example, if you write `let score = 100;`, TypeScript sees the value `100` and *infers* (deduces) that `score` must be a `number`. You did not need to write `let score: number = 100;` — TypeScript worked it out for you.
 
-### Understanding `typeof` and Type Narrowing
+Type inference is convenient, but explicit annotations are still valuable: they document your intent clearly and catch mistakes when you later assign the wrong kind of value.
 
-JavaScript provides a built-in operator called `typeof` that returns the type of a value as a string at runtime (e.g., `typeof 42` returns `"number"`, `typeof "hello"` returns `"string"`). The `===` operator checks for *strict equality* — it checks both the value and the type without any automatic conversion.
+### Special Types
 
-When TypeScript sees an `if` statement that uses `typeof`, it performs **type narrowing**: it understands that inside the `if` block, the variable must be the type you checked for. This is how you safely use `unknown` variables.
+- **`any`** — Tells TypeScript to stop checking this variable entirely. It effectively turns off type safety for that value. Avoid it wherever possible; using `any` defeats the purpose of TypeScript.
+- **`unknown`** — A safer alternative to `any`. TypeScript will not let you perform operations on an `unknown` value until you first prove what type it is at runtime. The process of proving a type is called **type narrowing** — you "narrow" a broad, uncertain type down to a specific one by testing it with a conditional check (for example, checking whether a value is a string before treating it as one). See the code example below for a demonstration.
+- **`void`** — Used as the return type of a function that does not return a meaningful value (for example, a function that only logs something to the terminal). See Section 4 for a full example.
+- **`never`** — Represents a value that can never exist. Used in functions that always throw an error or run forever (and therefore never return), and in **exhaustive checks** — patterns that confirm every possible case in a type has been handled.
+
+### The `typeof` Operator
+
+**`typeof`** is a JavaScript operator that inspects a value at runtime and returns a string describing its type — for example, `"string"`, `"number"`, or `"boolean"`. It is the most common tool for type narrowing: you use it inside an `if` condition to tell TypeScript "in this branch, I have confirmed the type is X."
+
+### Nullish Values
+
+A value is called **nullish** if it is either `null` or `undefined`. Both represent the absence of a value:
+
+- **`null`** means a value is *intentionally* absent — you or someone else deliberately set it to nothing.
+- **`undefined`** means a variable has been declared but has not yet been assigned any value.
+
+With TypeScript's strict mode enabled (a compiler option covered in Section 8 that turns on extra safety checks), `null` and `undefined` are treated as distinct types and cannot be accidentally assigned to a `string` or `number`.
+
+### Arrays and Tuples
+
+- An **array** is an ordered list of values of the same type. You can write it as `string[]` or equivalently as `Array<string>`.
+- A **tuple** is a fixed-length array where each position has a specific, predetermined type. The length and the type of each position are fixed — you cannot add extra elements or swap the positions. Use a tuple when the number of elements and their types are known and must not change — for example, a pair of `[id, name]`.
 
 ```typescript
-// ── Primitive types with explicit annotations ──────────────────────────
-let username: string  = "Alice";       // Must always be text
-let age: number       = 30;            // Must always be a number
-let isActive: boolean = true;          // Must always be true or false
+// types.ts — demonstrating TypeScript's basic types
 
-// ── The `let` keyword and type enforcement ─────────────────────────────
-// `let` declares a variable. TypeScript enforces the type on every future
-// assignment, not just the first one.
-let city: string = "London";
-// city = 42;  // ← Compiler ERROR: Type 'number' is not assignable
-//             //   to type 'string'. You promised `city` holds text.
+// ── Primitives with explicit type annotations ─────────────────
+let username: string = "Alice";          // must always be text
+let age: number = 30;                    // integer or decimal
+let isAdmin: boolean = false;            // only true or false
 
-// ── The `any` type — use sparingly ────────────────────────────────────
-let anything: any = "hello";
-anything = 42;           // Allowed — any accepts everything
-anything.toUpperCase();  // TypeScript won't warn even if this breaks at runtime
+// ── Type inference (no annotation needed) ────────────────────
+// TypeScript sees the value 42 and infers `score` is a number.
+// This is equivalent to writing: let score: number = 42;
+let score = 42;
 
-// ── The `unknown` type — safer than `any` ─────────────────────────────
-let mystery: unknown = "world";
-// mystery.toUpperCase();  // ← Compiler ERROR: must check type first
+// ── Arrays ───────────────────────────────────────────────────
+let colors: string[] = ["red", "green", "blue"]; // array of strings
+let counts: Array<number> = [1, 2, 3];           // alternative syntax
 
-// `typeof mystery === "string"` uses the `typeof` operator to ask JavaScript
-// "what type is this value right now?" and `===` to compare the result to
-// the string "string". If the check passes, TypeScript NARROWS the type:
-// it knows mystery must be a string inside this block, so it allows string
-// methods like .toUpperCase().
-if (typeof mystery === "string") {
-  console.log(mystery.toUpperCase()); // Safe: prints "WORLD"
+// ── Tuple ────────────────────────────────────────────────────
+// Position 0 must be a number (the ID); position 1 must be a string (the name).
+// The length is fixed at exactly 2 elements.
+let user: [number, string] = [1, "Alice"];
+
+// ── Type narrowing with typeof ────────────────────────────────
+// `rawInput` might be anything — we don't know its type yet.
+let rawInput: unknown = "hello from the server";
+
+// `typeof rawInput` returns the string "string" at runtime.
+// Inside this `if` block, TypeScript knows rawInput is a string,
+// so it allows us to call string-only methods like .toUpperCase().
+if (typeof rawInput === "string") {
+  console.log(rawInput.toUpperCase()); // Output: HELLO FROM THE SERVER
 }
 
-// ── Array types ────────────────────────────────────────────────────────
-let scores: number[]      = [95, 87, 100]; // Only numbers allowed
-let names: Array<string>  = ["Alice", "Bob"]; // Equivalent syntax
+// ── null and undefined (nullish values) ─────────────────────
+let middleName: string | null = null;         // intentionally absent
+let nickname: string | undefined = undefined; // not yet assigned
 
-// ── Tuple type ─────────────────────────────────────────────────────────
-// Exactly two elements: position 0 must be a string, position 1 a number.
-let person: [string, number] = ["Alice", 30];
-// person = [30, "Alice"];  // ← Compiler ERROR: wrong order of types
+// ── void: a function that returns nothing ────────────────────
+function printWelcome(name: string): void {
+  // This function logs a message but does not return a value.
+  console.log("Welcome, " + name + "!");
+}
 
-// ── Type inference (no annotation needed) ──────────────────────────────
-// TypeScript sees the value "Bob" and infers `inferred` is type `string`.
-// You never wrote `: string`, but the safety is identical.
-let inferred = "Bob";
-// inferred = 100;  // ← Compiler ERROR: Type 'number' is not assignable
-//                  //   to type 'string'. TypeScript inferred the type and
-//                  //   still enforces it on every subsequent assignment.
+printWelcome("Alice"); // Output: Welcome, Alice!
 ```
-
-Every annotation is a promise to the compiler. Breaking that promise produces a clear, descriptive error before the program ever runs.
 
 ---
 
 ## 4. Functions & Type Annotations
 
-Functions are the building blocks of any program. TypeScript lets you annotate both the **inputs** (parameters) and the **output** (return value
+Functions are the building blocks of any program. TypeScript lets you annotate both what goes *into* a function (its **parameters**) and what comes *out* (its **return type**). Annotating both prevents silent bugs — for example, accidentally returning `undefined` when a number is expected.
+
+### Annotating Parameters and Return Types
+
+The syntax for annotating a function is:
+
+```typescript
+function functionName(param1: type1, param2: type2): returnType {
+  // function body
+}
+```
+
+Here is a concrete example — a function that adds two numbers and returns the result:
+
+```typescript
+// add.ts
+
+// Both parameters are annotated as `number`.
+// The return type after the closing parenthesis is also `number`.
+// If you accidentally return a string here, TypeScript will error immediately.
+function add(a: number, b: number): number {
+  return a + b; // arithmetic on two numbers — safe and predictable
+}
+
+console.log(add(3, 4)); // Output: 7
+```
+
+### The `void` Return Type
+
+When a function does not return a meaningful value — for example, a function that only logs something to the terminal — annotate its return type as **`void`**. You already saw a `void` example at the end of Section 3. Here it is again for clarity:
+
+```typescript
+// void-example.ts
+
+// `void` tells TypeScript: "this function intentionally returns nothing."
+function logMessage(message: string): void {
+  console.log("LOG:", message);
+  // No `return` statement — TypeScript is satisfied because the return type is void.
+}
+
+logMessage("Server started"); // Output: LOG: Server started
+```
+
+### Union Types
+
+A **union type** uses the `|` (pipe) operator and means "this value can be one of these types." For example, `string | number` means the value is allowed to be either a string or a number — but nothing else. You write it by placing `|` between each permitted type. Union types appear frequently when a variable or parameter can legitimately hold more than one kind of value.
+
+```typescript
+// union-example.ts
+
+// `id` can hold either a string or a number.
+let id: string | number;
+id = 101;        // valid — number
+id = "user-101"; // also valid — string
+```
+
+### Optional and Default Parameters
+
+- An **optional parameter** is marked with `?` after its name. It may or may not be provided by the caller. Inside the function, its value will be `undefined` if the caller did not supply it. **Optional parameters must always come *after* required parameters.** The compiler matches arguments to parameters left to right — if an optional parameter appeared first, TypeScript would have no way of knowing whether a missing argument was intentionally skipped or accidentally omitted.
