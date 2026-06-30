@@ -39,6 +39,9 @@ crewai run
 # Run with a JSON input payload
 run_with_trigger '{"topic": "FastAPI"}'
 
+# Launch the student chatbot for a completed run
+chat <run_id>
+
 # Plot the flow graph
 plot
 ```
@@ -56,4 +59,10 @@ Three crews run in sequence:
 2. **Enrichment Crew** — runs targeted gap-fill web searches if the research quality score is below threshold. Skipped otherwise.
 3. **Writing Crew** — produces the guide through a four-step pipeline: outline → full draft → beginner review → final edit.
 
-After the guide is generated, a student chatbot can be launched against the same material. It answers questions grounded in the guide and original sources only, cites which section or source each answer comes from, and says so explicitly when a question is not covered by the material.
+After the guide is generated, a student chatbot can be launched against the same material:
+
+```
+chat <run_id>
+```
+
+The chatbot is powered by a fourth crew, the **QA Crew** — a single tutor agent with knowledge sources loaded from the generated guide, the research report, and any original PDF inputs. It answers questions grounded in the guide and original sources only, cites which section or source each answer comes from, and says so explicitly when a question is not covered by the material. Each turn is routed by intent (question / clarify / example / end) before being passed to the QA Crew.

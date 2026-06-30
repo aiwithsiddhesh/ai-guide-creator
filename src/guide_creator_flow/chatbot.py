@@ -201,6 +201,19 @@ def _load_knowledge_sources(run_id: str) -> list:
 # Entry point
 # ---------------------------------------------------------------------------
 
+def launch_chatbot_cli():
+    """CLI entry point — reads run_id from argv and starts the chat REPL."""
+    import sys
+
+    if len(sys.argv) < 2:
+        raise Exception(
+            "No run_id provided. Usage: chat <run_id>  "
+            "(run_id is the outputs/<run_id> folder name from a prior 'crewai run')"
+        )
+    run_id = sys.argv[1]
+    launch_chatbot(run_id)
+
+
 def launch_chatbot(run_id: str):
     """Load knowledge from outputs/<run_id>/ and start the terminal chat session."""
     # Isolate knowledge store per run
