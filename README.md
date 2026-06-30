@@ -49,7 +49,7 @@ plot
 Output is written to `outputs/<run_id>/`:
 - `getting_started_guide.md` — the generated guide
 - `research_report.md` — reusable research; can be passed directly to the chatbot
-- `metadata.json` — topic, source types, quality score, word count, error log
+- `metadata.json` — topic, source types, quality score, word count, error log, document paths
 
 ## How it works
 
