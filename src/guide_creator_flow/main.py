@@ -9,7 +9,7 @@ from pathlib import Path
 import requests
 from pydantic import BaseModel
 
-from crewai.flow import Flow, listen, persist, start
+from crewai.flow import Flow, listen, or_, persist, router, start
 
 from guide_creator_flow.crews.research_crew.research_crew import ResearchCrew
 from guide_creator_flow.crews.enrichment_crew.enrichment_crew import EnrichmentCrew
@@ -108,6 +108,7 @@ class GuideGeneratorFlow(Flow[GuideFlowState]):
 
         # --- URL reachability & SSRF check ---
         safe_youtube, safe_web, safe_papers = [], [], []
+        from urllib.parse import urlparse
         for bucket_in, bucket_out, label in [
             (self.state.youtube_links, safe_youtube, "youtube"),
             (self.state.webpage_links, safe_web, "web"),
@@ -115,21 +116,30 @@ class GuideGeneratorFlow(Flow[GuideFlowState]):
         ]:
             for url in bucket_in:
                 try:
-                    from urllib.parse import urlparse
                     hostname = urlparse(url).hostname or ""
                     if _is_private_ip(hostname):
                         self.state.error_log.append(
                             f"SSRF: rejected private IP URL {url}"
                         )
                         continue
+                    # Any HTTP response (including 4xx/5xx) means the host is reachable.
+                    # Only a network-level exception (timeout, DNS failure) means unreachable.
                     requests.head(url, timeout=5, allow_redirects=True)
-                    bucket_out.append(url)
-                    if label not in self.state.source_types:
-                        self.state.source_types.append(label)
-                except Exception as exc:
+                except requests.exceptions.ConnectionError as exc:
                     self.state.error_log.append(
                         f"unreachable URL dropped: {url} ({exc})"
                     )
+                    continue
+                except requests.exceptions.Timeout:
+                    self.state.error_log.append(
+                        f"unreachable URL dropped (timeout): {url}"
+                    )
+                    continue
+                except Exception:
+                    pass  # non-network errors (SSL quirks, etc.) — treat URL as reachable
+                bucket_out.append(url)
+                if label not in self.state.source_types:
+                    self.state.source_types.append(label)
 
         self.state.youtube_links = safe_youtube
         self.state.webpage_links = safe_web
@@ -139,7 +149,6 @@ class GuideGeneratorFlow(Flow[GuideFlowState]):
         safe_docs = []
         for path_str in self.state.document_paths:
             p = Path(path_str)
-            # reject path traversal
             try:
                 p.resolve().relative_to(document_input_dir.resolve())
             except ValueError:
@@ -161,6 +170,18 @@ class GuideGeneratorFlow(Flow[GuideFlowState]):
 
         self.state.document_paths = safe_docs
 
+        # --- Guard: at least one source must survive validation ---
+        if not any([
+            self.state.youtube_links,
+            self.state.webpage_links,
+            self.state.research_paper_links,
+            self.state.document_paths,
+        ]):
+            raise ValueError(
+                "No valid sources remain after validation. "
+                f"Errors: {self.state.error_log}"
+            )
+
         # --- Topic inference ---
         if not self.state.topic_hint:
             all_urls = (
@@ -175,9 +196,7 @@ class GuideGeneratorFlow(Flow[GuideFlowState]):
         slug = _topic_slug(self.state.topic_hint)
         self.state.run_id = f"{ts}_{slug}"
 
-        return "ready"
-
-    @listen("ready")
+    @listen(validate_inputs)
     def run_research_crew(self):
         """Run the dynamically assembled Research Crew."""
         crew = ResearchCrew().crew_for_sources(
@@ -186,7 +205,13 @@ class GuideGeneratorFlow(Flow[GuideFlowState]):
             research_paper_links=self.state.research_paper_links,
             document_paths=self.state.document_paths,
         )
-        result = crew.kickoff(inputs={"topic_hint": self.state.topic_hint})
+        result = crew.kickoff(inputs={
+            "topic_hint": self.state.topic_hint,
+            "youtube_links": self.state.youtube_links,
+            "webpage_links": self.state.webpage_links,
+            "research_paper_links": self.state.research_paper_links,
+            "document_paths": self.state.document_paths,
+        })
         self.state.research_report = result.raw
 
     @listen(run_research_crew)
@@ -194,7 +219,7 @@ class GuideGeneratorFlow(Flow[GuideFlowState]):
         """Strip prompt injection patterns from scraped content."""
         self.state.research_report = _scrub(self.state.research_report)
 
-    @listen(scrub_report)
+    @router(scrub_report)
     def evaluate_research(self):
         """Score research quality; return routing signal."""
         scorer = ResearchQualityScorerTool()
@@ -218,10 +243,8 @@ class GuideGeneratorFlow(Flow[GuideFlowState]):
             "Supplementary Research (Gap-Fill)",
             result.raw,
         )
-        return "enriched"
 
-    @listen("sufficient")
-    @listen("enriched")
+    @listen(or_("sufficient", run_enrichment_crew))
     def run_writing_crew(self):
         """Run the Writing Crew to produce the final guide."""
         result = WritingCrew().crew().kickoff(inputs={
@@ -231,7 +254,7 @@ class GuideGeneratorFlow(Flow[GuideFlowState]):
         self.state.final_guide = result.raw
         self.state.guide_word_count = len(self.state.final_guide.split())
 
-    @persist
+    @persist()
     @listen(run_writing_crew)
     def save_outputs(self):
         """Write all output files to outputs/<run_id>/."""

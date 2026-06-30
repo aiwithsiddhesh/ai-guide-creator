@@ -93,8 +93,10 @@ def test_evaluate_research_insufficient():
 def test_validate_inputs_rejects_private_ip():
     flow = GuideGeneratorFlow()
     flow.state.webpage_links = ["http://192.168.1.1/admin"]
+    # All sources rejected → validate_inputs now raises ValueError
     with patch("guide_creator_flow.main._is_private_ip", return_value=True):
-        flow.validate_inputs()
+        with pytest.raises(ValueError, match="No valid sources"):
+            flow.validate_inputs()
     assert flow.state.webpage_links == []
     assert any("SSRF" in e for e in flow.state.error_log)
 
@@ -103,7 +105,8 @@ def test_validate_inputs_rejects_path_traversal():
     flow = GuideGeneratorFlow()
     flow.state.document_paths = ["../etc/passwd"]
     with patch.dict(os.environ, {"DOCUMENT_INPUT_DIR": "inputs"}):
-        flow.validate_inputs()
+        with pytest.raises(ValueError, match="No valid sources"):
+            flow.validate_inputs()
     assert flow.state.document_paths == []
     assert any("path traversal" in e for e in flow.state.error_log)
 
@@ -113,9 +116,7 @@ def test_validate_inputs_rejects_oversized_file():
         f.write(b"x" * 100)
         tmp_path = f.name
 
-    # Put it inside a temp inputs dir so the sandbox check passes
     tmp_dir = Path(tmp_path).parent
-    rel_path = Path(tmp_path).name
 
     flow = GuideGeneratorFlow()
     flow.state.document_paths = [tmp_path]
@@ -124,7 +125,8 @@ def test_validate_inputs_rejects_oversized_file():
         "DOCUMENT_INPUT_DIR": str(tmp_dir),
         "MAX_FILE_BYTES": "50",  # 50 bytes max → 100-byte file rejected
     }):
-        flow.validate_inputs()
+        with pytest.raises(ValueError, match="No valid sources"):
+            flow.validate_inputs()
 
     Path(tmp_path).unlink(missing_ok=True)
 

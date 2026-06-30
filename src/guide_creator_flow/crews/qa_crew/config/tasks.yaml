@@ -1,0 +1,18 @@
+answer_question:
+  description: >
+    A student has asked the following question about {topic}:
+
+    Question: {question}
+
+    Conversation history (last 10 messages):
+    {history}
+
+    Search the guide and source material to find the answer. Cite the specific
+    section heading or source URL where the information comes from. If the answer
+    is not covered in the material, say so explicitly — do not invent an answer.
+  expected_output: >
+    A clear, beginner-friendly answer to the question with a citation like
+    "Source: ## Section Name" or "Source: https://..." at the end.
+    If the question is not covered, respond with: "That topic is not covered in
+    the guide or sources I have access to."
+  agent: tutor_agent

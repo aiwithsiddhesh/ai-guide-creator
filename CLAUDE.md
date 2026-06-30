@@ -24,6 +24,7 @@ uv run pytest
 uv run pytest tests/crews/test_crew_wiring.py
 uv run pytest tests/flow/test_flow_nodes.py
 uv run pytest tests/flow/test_get_inputs.py
+uv run pytest tests/chatbot/test_intent_routing.py
 uv run pytest -k test_crew_for_sources_youtube_only
 
 # LLM output quality scoring (requires OPENAI_API_KEY in .env — evaluator only)
@@ -75,7 +76,7 @@ validate_inputs (@start) → "ready"
 - **`EnrichmentCrew`** — sequential, gap-fill web search, runs only when research quality score < 6.
 - **`WritingCrew`** — sequential, four-step pipeline: outline → draft → beginner review → edit.
 
-After guide generation, **`StudentChatbotFlow`** (`chatbot.py`) provides a conversational interface grounded exclusively in the generated guide and source material. Not yet implemented.
+After guide generation, **`StudentChatbotFlow`** (`chatbot.py`) provides a terminal chat session grounded exclusively in the generated guide and source material, routing each message to `QACrew` by intent.
 
 ### Key design decisions
 
@@ -88,6 +89,10 @@ After guide generation, **`StudentChatbotFlow`** (`chatbot.py`) provides a conve
 - **`scrub_report` node** — strips prompt injection patterns from scraped content before it reaches any downstream crew. Patterns matched by `_INJECTION_PATTERN` in `main.py`.
 - **VoyageAI embeddings** — passed as `embedder={"provider": "voyageai", "config": {"model": "voyage-3"}}` to both `Crew` and `Memory` to avoid LanceDB conflicts.
 - **`@persist` on terminal step only** — applied to `save_outputs` in the flow, not class-wide. To resume a failed run after research completed: `GuideGeneratorFlow().kickoff(restore_from_state_id="<uuid>")`.
+- **`ConversationalFlow` unavailable** — `crewai.experimental.conversational` does not exist in `crewai==1.14.4`. `StudentChatbotFlow` uses standard `Flow` with a `chat()` REPL that calls `kickoff()` per turn and manages `state.messages` manually.
+- **Knowledge isolation per run** — `launch_chatbot()` sets `CREWAI_STORAGE_DIR=./outputs/<run_id>/.crewai` before instantiating `StudentChatbotFlow` so each guide run gets its own LanceDB store.
+- **Knowledge sources loaded once** — `QACrew` receives `knowledge_sources` in `__init__` and reuses them across all turns; do not reload inside handlers (triggers re-embedding).
+- **`route_intent()`** — plain keyword matching in `chatbot.py`; tested independently in `tests/chatbot/test_intent_routing.py`. Priority order: end → example → clarify → question (default).
 
 ### Current state
 
@@ -98,4 +103,5 @@ After guide generation, **`StudentChatbotFlow`** (`chatbot.py`) provides a conve
 - **`get_inputs()`** (`main.py`) — interactive prompt: comma-separated URLs validated with `_URL_RE` regex, file paths verified with `Path.exists()`, optional topic hint, raises `ValueError` if no sources provided.
 - **`tools/topic_inference_tool.py`** — fully implemented: pure function, no LLM.
 - **`tools/research_quality_scorer_tool.py`** — fully implemented: `BaseTool` + standalone `score_report()`, 5-criterion regex rubric.
-- **`chatbot.py`** — not yet implemented.
+- **`chatbot.py`** — fully implemented: `StudentChatbotFlow(Flow[ChatbotState])`, `route_intent()` keyword dispatch (end/example/clarify/question), `QACrew` with knowledge+memory, `launch_chatbot(run_id)` entry point, `chat()` REPL. `ConversationalFlow` not available in `crewai==1.14.4`; implemented via standard `Flow` with a manual REPL loop.
+- **`crews/qa_crew/`** — fully implemented: `tutor_agent` (claude-sonnet-4-6), `answer_question` task, sequential crew with VoyageAI embedder and `Memory`.
