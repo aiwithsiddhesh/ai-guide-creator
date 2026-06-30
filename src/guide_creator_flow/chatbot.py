@@ -6,7 +6,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from crewai.flow import Flow, listen, start
+from crewai.flow import Flow, listen, router, start
 from crewai.knowledge.source.string_knowledge_source import StringKnowledgeSource
 from crewai.knowledge.source.pdf_knowledge_source import PDFKnowledgeSource
 
@@ -72,6 +72,11 @@ class StudentChatbotFlow(Flow[ChatbotState]):
     @start()
     def receive_message(self):
         """Entry node — intent is already set on state before kickoff."""
+        pass
+
+    @router(receive_message)
+    def route_intent_node(self):
+        """Route to the correct handler based on last_intent."""
         return self.state.last_intent
 
     # ------------------------------------------------------------------
