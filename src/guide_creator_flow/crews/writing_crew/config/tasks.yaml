@@ -1,17 +1,80 @@
-research_task:
+create_outline:
   description: >
-    Conduct a thorough research about {topic}
-    Make sure you find any interesting and relevant information given
-    the current year is {current_year}.
-  expected_output: >
-    A list with 10 bullet points of the most relevant information about {topic}
-  agent: researcher
+    Using the research report below, produce a detailed outline for a beginner-friendly
+    getting-started guide on "{topic_hint}".
 
-reporting_task:
-  description: >
-    Review the context you got and expand each topic into a full section for a report.
-    Make sure the report is detailed and contains any and all relevant information.
+    Research report:
+    {research_report}
+
+    The outline must include, for every section:
+    - Section title (H2)
+    - Learning objective (one sentence: "After this section the reader will be able to...")
+    - List of concepts to cover
+    - Description of any code example to include (what it does, what it demonstrates)
+    - Target word count
+
+    Do not write any prose. The outline is a contract for the writer.
   expected_output: >
-    A fully fledged report with the main topics, each with a full section of information.
-    Formatted as markdown without '```'
-  agent: reporting_analyst
+    A structured Markdown outline. No prose — only section titles, bullet points, and
+    target word counts. Every section has a learning objective. Code examples described
+    but not written. Minimum 6 sections.
+  agent: content_strategist
+
+write_draft:
+  description: >
+    Write the complete getting-started guide following the outline exactly.
+
+    Rules:
+    - Follow every section in the outline in order. Do not skip or reorder sections.
+    - Define every technical term on its first use.
+    - Every code example must be complete, runnable, and annotated line by line with comments.
+    - Use fenced code blocks with the correct language tag.
+    - Do not reference the outline explicitly in the guide text.
+  expected_output: >
+    A complete Markdown guide following the outline section by section. All code in fenced
+    blocks with language tags. Every term defined on first use. No placeholders or TODOs.
+  agent: technical_writer
+  context:
+    - create_outline
+
+review_draft:
+  description: >
+    Read the draft guide as a complete beginner with zero prior knowledge of "{topic_hint}".
+
+    For every place where you would be confused, stuck, or unable to continue as a beginner,
+    write one numbered problem statement. Be specific — name the section and the exact issue.
+
+    Do not rewrite anything. Do not praise anything. Do not suggest fixes.
+    Output a numbered list of problems only.
+  expected_output: >
+    A numbered list of specific problems found in the draft. Each item names the section
+    and the exact issue. No prose, no rewrites, no praise. At least 3 items if problems exist;
+    "No problems found." only if the guide is genuinely beginner-complete.
+  agent: beginner_reviewer
+  context:
+    - write_draft
+
+edit_and_publish:
+  description: >
+    You have the draft guide and the beginner reviewer's problem list.
+
+    Work through the numbered problem list in order:
+    - Fix each problem directly in the guide.
+    - If a problem cannot be fixed (missing source material, out of scope), add it to a
+      "## Known Gaps" section at the end of the guide.
+
+    After resolving all problems, do a final polish pass:
+    - Ensure consistent voice and terminology throughout.
+    - Ensure all code blocks have language tags.
+    - Ensure the guide reads smoothly from start to finish.
+
+    Output the complete final guide only — no commentary, no problem list.
+  expected_output: >
+    The complete, polished final guide in Markdown. Every problem from the review either
+    fixed inline or documented under "## Known Gaps". All code in fenced blocks.
+    No placeholders or TODOs remaining.
+  agent: content_editor
+  context:
+    - write_draft
+    - review_draft
+  output_file: output/getting_started_guide.md

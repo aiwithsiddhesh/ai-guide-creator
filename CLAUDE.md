@@ -60,7 +60,7 @@ After guide generation, **`StudentChatbotFlow`** (`chatbot.py`) provides a conve
 ### Key design decisions
 
 - **`@CrewBase` pattern** — all three crews use `@agent`, `@task`, `@crew` decorators; agent/task config lives in `config/agents.yaml` and `config/tasks.yaml` loaded via `self.agents_config[key]` / `self.tasks_config[key]`.
-- **`TOOL_REGISTRY`** (`tool_registry.py`) — maps string names to instantiated tool objects. Research Crew `@agent` methods wire tools from here at runtime; tools cannot be listed directly in `agents.yaml` because `@CrewBase` would try to resolve them through its own registry.
+- **`TOOL_REGISTRY`** (`tool_registry.py`) — lazily instantiates tools on first `__getitem__` access (importing the module never triggers API key validation). Research and Enrichment Crew `@agent` methods wire tools from here at runtime; tools cannot be listed directly in `agents.yaml` because `@CrewBase` would try to resolve them through its own registry. Crew wiring tests patch `TOOL_REGISTRY` with `MagicMock(spec=BaseTool)` values — `spec=BaseTool` is required for Pydantic's `isinstance` check in `Agent` to pass.
 - **`YoutubeTranscriptTool`** (`tools/youtube_transcript_tool.py`) — custom `BaseTool` wrapping `youtube-transcript-api`. Used instead of `YoutubeVideoSearchTool` because the latter requires OpenAI embeddings.
 - **`FileReadTool`** instead of `PDFSearchTool`/`TXTSearchTool` — those require OpenAI embeddings; `FileReadTool` reads content directly. Semantic retrieval is handled by the Knowledge system in the chatbot.
 - **Dynamic crew assembly** — `ResearchCrew.crew_for_sources()` builds the crew at runtime with only the specialists whose source bucket is non-empty. The `_task()` helper strips the `agent` and `context` keys from the YAML dict before constructing each `Task` (passing them both as YAML string and as a kwarg raises `TypeError`).
@@ -71,6 +71,7 @@ After guide generation, **`StudentChatbotFlow`** (`chatbot.py`) provides a conve
 ### Current state
 
 - **`ResearchCrew`** — fully implemented: 5 agents with per-agent LLMs, 5 tasks, `crew_for_sources()` dynamic assembly, tools wired from `TOOL_REGISTRY`.
-- **`EnrichmentCrew`** / **`WritingCrew`** — scaffold only; agents and tasks not yet implemented.
+- **`EnrichmentCrew`** — fully implemented: 1 agent (`web_search_agent`, haiku), 1 task (`gap_fill_task`), sequential, `memory=False`.
+- **`WritingCrew`** — fully implemented: 4 agents (strategist, writer, reviewer with `system_template`, editor), 4 tasks with explicit context wiring, sequential, `memory=True`, `output_file` on `edit_and_publish`.
 - **`main.py`** — placeholder `ContentFlow`; pending replacement with `GuideGeneratorFlow` + `GuideFlowState`.
 - **`tools/topic_inference_tool.py`**, **`tools/research_quality_scorer_tool.py`**, **`chatbot.py`** — not yet implemented.

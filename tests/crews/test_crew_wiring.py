@@ -2,7 +2,6 @@
 
 from unittest.mock import MagicMock, patch
 
-import pytest
 from crewai import Crew
 from crewai.tools import BaseTool
 
@@ -142,3 +141,33 @@ def test_crew_for_sources_compile_task_has_dynamic_context():
     )
     compile_task = crew.tasks[-1]
     assert len(compile_task.context) == 1
+
+
+# ---------------------------------------------------------------------------
+# Enrichment Crew
+# ---------------------------------------------------------------------------
+
+@patch("guide_creator_flow.crews.enrichment_crew.enrichment_crew.TOOL_REGISTRY", MOCK_REGISTRY)
+def test_enrichment_crew_instantiates():
+    """EnrichmentCrew().crew() returns a Crew object."""
+    from guide_creator_flow.crews.enrichment_crew.enrichment_crew import EnrichmentCrew
+    crew = EnrichmentCrew().crew()
+    assert isinstance(crew, Crew)
+
+
+# ---------------------------------------------------------------------------
+# Writing Crew
+# ---------------------------------------------------------------------------
+
+def test_writing_crew_instantiates():
+    """WritingCrew().crew() returns a Crew object."""
+    from guide_creator_flow.crews.writing_crew.writing_crew import WritingCrew
+    crew = WritingCrew().crew()
+    assert isinstance(crew, Crew)
+
+
+def test_writing_crew_memory_enabled():
+    """Writing Crew has memory enabled."""
+    from guide_creator_flow.crews.writing_crew.writing_crew import WritingCrew
+    crew = WritingCrew().crew()
+    assert crew.memory is True

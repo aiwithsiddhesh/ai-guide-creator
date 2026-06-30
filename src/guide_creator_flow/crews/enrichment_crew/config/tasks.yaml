@@ -1,17 +1,18 @@
-research_task:
+gap_fill_task:
   description: >
-    Conduct a thorough research about {topic}
-    Make sure you find any interesting and relevant information given
-    the current year is {current_year}.
-  expected_output: >
-    A list with 10 bullet points of the most relevant information about {topic}
-  agent: researcher
+    The initial research on "{topic_hint}" was incomplete. The following gaps were identified:
 
-reporting_task:
-  description: >
-    Review the context you got and expand each topic into a full section for a report.
-    Make sure the report is detailed and contains any and all relevant information.
+    {gaps}
+
+    For each gap in the list above:
+    1. Formulate a targeted search query for that specific gap.
+    2. Search the web and scrape the most relevant result.
+    3. Extract only the information that directly addresses the gap.
+    4. If no reliable source can be found for a gap, note it as unresolvable with the reason.
+
+    Do not re-research the topic generally. Every search must map to a named gap.
   expected_output: >
-    A fully fledged report with the main topics, each with a full section of information.
-    Formatted as markdown without '```'
-  agent: reporting_analyst
+    Markdown document with one H2 section per gap, using the gap name as the heading.
+    Each section contains: the information found (with inline source URL), or a note
+    that the gap could not be resolved and why. No invented content.
+  agent: web_search_agent
