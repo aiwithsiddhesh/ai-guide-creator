@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import json
 import re
 import socket
 import ipaddress
@@ -266,11 +267,80 @@ class GuideGeneratorFlow(Flow[GuideFlowState]):
 
 
 # ---------------------------------------------------------------------------
+# Input layer
+# ---------------------------------------------------------------------------
+
+_URL_RE = re.compile(r"^https?://[^\s]+$")
+
+
+def _parse_csv(raw: str) -> list[str]:
+    return [item.strip() for item in raw.split(",") if item.strip()]
+
+
+def get_inputs() -> dict:
+    """Interactive prompt that collects and pre-validates all flow inputs."""
+    print("\n=== Guide Creator — Input Collection ===\n")
+
+    # YouTube links
+    raw = input("YouTube video URLs (comma-separated, or press Enter to skip):\n> ").strip()
+    youtube_links = []
+    for url in _parse_csv(raw):
+        if _URL_RE.match(url):
+            youtube_links.append(url)
+        else:
+            print(f"  [skip] invalid URL: {url}")
+
+    # Web page links
+    raw = input("\nWeb page URLs (comma-separated, or press Enter to skip):\n> ").strip()
+    webpage_links = []
+    for url in _parse_csv(raw):
+        if _URL_RE.match(url):
+            webpage_links.append(url)
+        else:
+            print(f"  [skip] invalid URL: {url}")
+
+    # Research paper links (arXiv)
+    raw = input("\nResearch paper URLs (comma-separated, or press Enter to skip):\n> ").strip()
+    research_paper_links = []
+    for url in _parse_csv(raw):
+        if _URL_RE.match(url):
+            research_paper_links.append(url)
+        else:
+            print(f"  [skip] invalid URL: {url}")
+
+    # Local document paths
+    raw = input("\nLocal file paths (comma-separated, or press Enter to skip):\n> ").strip()
+    document_paths = []
+    for path_str in _parse_csv(raw):
+        if Path(path_str).exists():
+            document_paths.append(path_str)
+        else:
+            print(f"  [skip] file not found: {path_str}")
+
+    # Topic hint
+    topic_hint = input(
+        "\nTopic hint (optional — leave blank for auto-inference):\n> "
+    ).strip()
+
+    if not any([youtube_links, webpage_links, research_paper_links, document_paths]):
+        raise ValueError("At least one source (URL or file) is required.")
+
+    return {
+        "youtube_links": youtube_links,
+        "webpage_links": webpage_links,
+        "research_paper_links": research_paper_links,
+        "document_paths": document_paths,
+        "topic_hint": topic_hint,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Entry points
 # ---------------------------------------------------------------------------
 
 def kickoff():
-    GuideGeneratorFlow().kickoff()
+    inputs = get_inputs()
+    GuideGeneratorFlow().kickoff(inputs)
 
 
 def plot():
@@ -278,7 +348,6 @@ def plot():
 
 
 def run_with_trigger():
-    import json
     import sys
 
     if len(sys.argv) < 2:

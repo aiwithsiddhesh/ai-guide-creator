@@ -23,6 +23,7 @@ uv run pytest
 # Run a specific test file or single test
 uv run pytest tests/crews/test_crew_wiring.py
 uv run pytest tests/flow/test_flow_nodes.py
+uv run pytest tests/flow/test_get_inputs.py
 uv run pytest -k test_crew_for_sources_youtube_only
 
 # LLM output quality scoring (requires OPENAI_API_KEY in .env — evaluator only)
@@ -93,7 +94,8 @@ After guide generation, **`StudentChatbotFlow`** (`chatbot.py`) provides a conve
 - **`ResearchCrew`** — fully implemented: 5 agents with per-agent LLMs, 5 tasks, `crew_for_sources()` dynamic assembly, tools wired from `TOOL_REGISTRY`.
 - **`EnrichmentCrew`** — fully implemented: 1 agent (`web_search_agent`, haiku), 1 task (`gap_fill_task`), sequential, `memory=False`.
 - **`WritingCrew`** — fully implemented: 4 agents (strategist, writer, reviewer with `system_template`, editor), 4 tasks with explicit context wiring, sequential, `memory=True`, `output_file` on `edit_and_publish`.
-- **`GuideGeneratorFlow`** (`main.py`) — fully implemented: `GuideFlowState`, 7 flow nodes, SSRF/path-traversal/file-size security checks, topic inference, quality gate routing, enrichment append, output file writing.
+- **`GuideGeneratorFlow`** (`main.py`) — fully implemented: `GuideFlowState`, 7 flow nodes, SSRF/path-traversal/file-size security checks, topic inference, quality gate routing, enrichment append, output file writing. `get_inputs()` interactive prompt wired into `kickoff()`.
+- **`get_inputs()`** (`main.py`) — interactive prompt: comma-separated URLs validated with `_URL_RE` regex, file paths verified with `Path.exists()`, optional topic hint, raises `ValueError` if no sources provided.
 - **`tools/topic_inference_tool.py`** — fully implemented: pure function, no LLM.
 - **`tools/research_quality_scorer_tool.py`** — fully implemented: `BaseTool` + standalone `score_report()`, 5-criterion regex rubric.
 - **`chatbot.py`** — not yet implemented.
