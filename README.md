@@ -39,6 +39,9 @@ crewai run
 # Run with a JSON input payload
 run_with_trigger '{"topic": "FastAPI"}'
 
+# Example payload using the shipped sample file under inputs/
+run_with_trigger '{"topic_hint": "FastAPI", "document_paths": ["inputs/sample_notes.md"]}'
+
 # Launch the student chatbot for a completed run
 chat <run_id>
 
@@ -60,7 +63,7 @@ See [TESTING.md](TESTING.md) for the test strategy and how to run the suite.
 Three crews run in sequence:
 
 1. **Research Crew** — fetches and extracts content from all provided sources. Only the specialists needed for the given source types are activated (YouTube, web pages, arXiv papers, local files).
-2. **Enrichment Crew** — runs targeted gap-fill web searches if the research quality score is below threshold. Skipped otherwise.
+2. **Enrichment Crew** — runs targeted gap-fill web searches if the research quality score is below threshold. Skipped otherwise. The quality score is a cheap regex heuristic (pattern-matches for explanations, install steps, code examples, etc.), not a semantic quality check — it can miss legitimately good research that's phrased differently, or pass shallow research that happens to match the patterns.
 3. **Writing Crew** — produces the guide through a four-step pipeline: outline → full draft → beginner review → final edit.
 
 After the guide is generated, a student chatbot can be launched against the same material:

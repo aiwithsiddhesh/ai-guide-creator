@@ -26,10 +26,10 @@ def route_intent(message: str) -> str:
     lower = message.lower().strip()
     if any(kw in lower for kw in _END_KEYWORDS):
         return "end"
-    if any(kw in lower for kw in _EXAMPLE_KEYWORDS):
-        return "example"
     if any(kw in lower for kw in _CLARIFY_KEYWORDS):
         return "clarify"
+    if any(kw in lower for kw in _EXAMPLE_KEYWORDS):
+        return "example"
     return "question"
 
 
@@ -186,8 +186,13 @@ def _load_knowledge_sources(run_id: str) -> list:
         meta = json.loads(metadata_path.read_text(encoding="utf-8"))
         for path_str in meta.get("document_paths", []):
             p = Path(path_str)
-            if p.exists() and p.suffix.lower() == ".pdf":
+            if not p.exists():
+                continue
+            suffix = p.suffix.lower()
+            if suffix == ".pdf":
                 sources.append(PDFKnowledgeSource(file_paths=[p]))
+            elif suffix in (".txt", ".md"):
+                sources.append(TextFileKnowledgeSource(file_paths=[p]))
 
     return sources
 

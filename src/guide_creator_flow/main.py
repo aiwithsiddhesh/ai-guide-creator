@@ -56,6 +56,20 @@ def _append_to_report(existing: str, header: str, content: str) -> str:
     return existing + f"\n\n## {header}\n\n{content}"
 
 
+def _log_token_usage(state: "GuideFlowState", crew_name: str, result) -> None:
+    """Accumulate and print token usage from a crew's CrewOutput.token_usage."""
+    usage = getattr(result, "token_usage", None)
+    total = getattr(usage, "total_tokens", None)
+    prompt = getattr(usage, "prompt_tokens", None)
+    completion = getattr(usage, "completion_tokens", None)
+    if not isinstance(total, int) or not isinstance(prompt, int) or not isinstance(completion, int):
+        return
+    state.total_tokens += total
+    state.total_prompt_tokens += prompt
+    state.total_completion_tokens += completion
+    print(f"  [tokens] {crew_name}: {total} total ({prompt} prompt / {completion} completion)")
+
+
 def _topic_slug(topic: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", topic.lower()).strip("_")[:30] or "unknown"
 
@@ -84,6 +98,11 @@ class GuideFlowState(BaseModel):
     # writing outputs
     final_guide: str = ""
     guide_word_count: int = 0
+
+    # observability
+    total_tokens: int = 0
+    total_prompt_tokens: int = 0
+    total_completion_tokens: int = 0
 
     # control
     run_id: str = ""
@@ -214,6 +233,7 @@ class GuideGeneratorFlow(Flow[GuideFlowState]):
         })
         self.state.research_report = result.pydantic.report
         self.state.source_citations = result.pydantic.sources
+        _log_token_usage(self.state, "Research Crew", result)
 
     @listen(run_research_crew)
     def scrub_report(self):
@@ -244,6 +264,7 @@ class GuideGeneratorFlow(Flow[GuideFlowState]):
             "Supplementary Research (Gap-Fill)",
             result.raw,
         )
+        _log_token_usage(self.state, "Enrichment Crew", result)
 
     @listen(or_("sufficient", run_enrichment_crew))
     def run_writing_crew(self):
@@ -254,6 +275,7 @@ class GuideGeneratorFlow(Flow[GuideFlowState]):
         })
         self.state.final_guide = result.raw
         self.state.guide_word_count = len(self.state.final_guide.split())
+        _log_token_usage(self.state, "Writing Crew", result)
 
     @persist()
     @listen(run_writing_crew)
@@ -281,6 +303,11 @@ class GuideGeneratorFlow(Flow[GuideFlowState]):
             "document_paths": [
                 str(Path(p).resolve()) for p in self.state.document_paths
             ],
+            "token_usage": {
+                "total_tokens": self.state.total_tokens,
+                "prompt_tokens": self.state.total_prompt_tokens,
+                "completion_tokens": self.state.total_completion_tokens,
+            },
         }
         (out_dir / "metadata.json").write_text(
             json.dumps(metadata, indent=2), encoding="utf-8"
@@ -289,6 +316,7 @@ class GuideGeneratorFlow(Flow[GuideFlowState]):
         print(f"\nOutputs written to {out_dir}/")
         print(f"  Guide: {self.state.guide_word_count} words")
         print(f"  Quality score: {self.state.research_quality_score}/10")
+        print(f"  Total tokens: {self.state.total_tokens}")
         if self.state.error_log:
             print(f"  Errors: {len(self.state.error_log)} (see metadata.json)")
 
