@@ -4,14 +4,13 @@
 import os
 from pathlib import Path
 
+from crewai.flow import Flow, listen, router, start
+from crewai.knowledge.source.json_knowledge_source import JSONKnowledgeSource
+from crewai.knowledge.source.pdf_knowledge_source import PDFKnowledgeSource
+from crewai.knowledge.source.text_file_knowledge_source import TextFileKnowledgeSource
 from pydantic import BaseModel
 
-from crewai.flow import Flow, listen, router, start
-from crewai.knowledge.source.string_knowledge_source import StringKnowledgeSource
-from crewai.knowledge.source.pdf_knowledge_source import PDFKnowledgeSource
-
 from guide_creator_flow.crews.qa_crew.qa_crew import QACrew
-
 
 # ---------------------------------------------------------------------------
 # Intent routing
@@ -172,27 +171,23 @@ def _load_knowledge_sources(run_id: str) -> list:
 
     guide_path = out_dir / "getting_started_guide.md"
     if guide_path.exists():
-        sources.append(StringKnowledgeSource(
-            content=guide_path.read_text(encoding="utf-8"),
-            metadata={"source": "getting_started_guide.md"},
-        ))
+        sources.append(TextFileKnowledgeSource(file_paths=[guide_path]))
 
     report_path = out_dir / "research_report.md"
     if report_path.exists():
-        sources.append(StringKnowledgeSource(
-            content=report_path.read_text(encoding="utf-8"),
-            metadata={"source": "research_report.md"},
-        ))
+        sources.append(TextFileKnowledgeSource(file_paths=[report_path]))
 
     # PDF files from original document_paths recorded in metadata
     import json
     metadata_path = out_dir / "metadata.json"
     if metadata_path.exists():
+        sources.append(JSONKnowledgeSource(file_paths=[metadata_path]))
+
         meta = json.loads(metadata_path.read_text(encoding="utf-8"))
         for path_str in meta.get("document_paths", []):
             p = Path(path_str)
             if p.exists() and p.suffix.lower() == ".pdf":
-                sources.append(PDFKnowledgeSource(file_path=str(p)))
+                sources.append(PDFKnowledgeSource(file_paths=[p]))
 
     return sources
 

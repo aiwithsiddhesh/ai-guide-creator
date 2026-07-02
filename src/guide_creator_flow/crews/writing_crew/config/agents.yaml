@@ -1,5 +1,6 @@
 content_strategist:
   llm: anthropic/claude-sonnet-4-6
+  reasoning: true
   role: >
     Content Strategist
   goal: >

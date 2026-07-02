@@ -2,6 +2,7 @@ research_director:
   llm: anthropic/claude-sonnet-4-6
   respect_context_window: true
   inject_date: true
+  reasoning: true
   role: >
     Research Director
   goal: >
