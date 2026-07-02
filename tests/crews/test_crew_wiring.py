@@ -83,6 +83,31 @@ def test_research_crew_memory_disabled():
     assert crew.memory is False
 
 
+@patch("guide_creator_flow.crews.research_crew.research_crew.TOOL_REGISTRY", MOCK_REGISTRY)
+def test_research_crew_agent_capability_flags():
+    """Agent-capability flags from agents.yaml are applied to the built agents."""
+    from guide_creator_flow.crews.research_crew.research_crew import ResearchCrew
+    crew = ResearchCrew().crew()
+    agents_by_role = {a.role.strip(): a for a in crew.agents}
+
+    assert agents_by_role["Research Director"].respect_context_window is True
+    assert agents_by_role["Research Director"].inject_date is True
+
+    assert agents_by_role["YouTube Content Analyst"].max_rpm == 15
+    assert agents_by_role["Web Documentation Researcher"].max_rpm == 10
+
+    for role in (
+        "YouTube Content Analyst",
+        "Web Documentation Researcher",
+        "Academic Research Analyst",
+        "Document Content Analyst",
+    ):
+        assert agents_by_role[role].max_execution_time is not None
+
+    assert agents_by_role["Academic Research Analyst"].respect_context_window is True
+    assert agents_by_role["Document Content Analyst"].multimodal is True
+
+
 # ---------------------------------------------------------------------------
 # Research Crew — crew_for_sources (dynamic)
 # ---------------------------------------------------------------------------

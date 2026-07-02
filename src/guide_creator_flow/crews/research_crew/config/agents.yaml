@@ -1,5 +1,7 @@
 research_director:
   llm: anthropic/claude-sonnet-4-6
+  respect_context_window: true
+  inject_date: true
   role: >
     Research Director
   goal: >
@@ -14,6 +16,8 @@ research_director:
 
 youtube_analyst:
   llm: anthropic/claude-haiku-4-5-20251001
+  max_rpm: 15
+  max_execution_time: 180
   role: >
     YouTube Content Analyst
   goal: >
@@ -28,6 +32,8 @@ youtube_analyst:
 
 web_researcher:
   llm: anthropic/claude-haiku-4-5-20251001
+  max_rpm: 10
+  max_execution_time: 180
   role: >
     Web Documentation Researcher
   goal: >
@@ -41,6 +47,8 @@ web_researcher:
 
 academic_analyst:
   llm: anthropic/claude-sonnet-4-6
+  respect_context_window: true
+  max_execution_time: 240
   role: >
     Academic Research Analyst
   goal: >
@@ -55,6 +63,8 @@ academic_analyst:
 
 document_analyst:
   llm: anthropic/claude-haiku-4-5-20251001
+  max_execution_time: 180
+  multimodal: true
   role: >
     Document Content Analyst
   goal: >
