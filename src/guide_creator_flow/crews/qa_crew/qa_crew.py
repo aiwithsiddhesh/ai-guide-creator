@@ -1,10 +1,15 @@
+from pathlib import Path
+
 from crewai import Agent, Crew, Process, Task
 from crewai.crews import CrewOutput
-from crewai.knowledge.source.base_knowledge_source import BaseKnowledgeSource
 from crewai.knowledge.knowledge_config import KnowledgeConfig
+from crewai.knowledge.source.base_knowledge_source import BaseKnowledgeSource
 from crewai.project import CrewBase, agent, crew, task
 
 _EMBEDDER = {"provider": "voyageai", "config": {"model": "voyage-3"}}
+_GROUNDED_CITATION_ANSWERING_SKILL = str(
+    (Path(__file__).parent.parent.parent / "skills" / "grounded-citation-answering").resolve()
+)
 
 
 @CrewBase
@@ -25,6 +30,7 @@ class QACrew:
             knowledge_sources=self._knowledge_sources,
             knowledge_config=KnowledgeConfig(results_limit=10, score_threshold=0.4),
             embedder=_EMBEDDER,
+            skills=[_GROUNDED_CITATION_ANSWERING_SKILL],
         )
 
     @task

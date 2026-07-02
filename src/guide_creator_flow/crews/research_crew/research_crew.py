@@ -1,9 +1,15 @@
-from crewai import Agent, Crew, LLM, Process, Task
+from pathlib import Path
+
+from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from pydantic import BaseModel
 
 from guide_creator_flow.tool_registry import TOOL_REGISTRY
 from guide_creator_flow.tools.citation_guardrail_tool import check_citations
+
+_SOURCE_EXTRACTION_FIDELITY_SKILL = str(
+    (Path(__file__).parent.parent.parent / "skills" / "source-extraction-fidelity").resolve()
+)
 
 
 class ResearchReportOutput(BaseModel):
@@ -44,6 +50,7 @@ class ResearchCrew:
                 TOOL_REGISTRY["scrape_website"],
                 TOOL_REGISTRY["firecrawl_scrape"],
             ],
+            skills=[_SOURCE_EXTRACTION_FIDELITY_SKILL],
             verbose=True,
         )
 
@@ -52,6 +59,7 @@ class ResearchCrew:
         return Agent(
             config=self.agents_config["academic_analyst"],
             tools=[TOOL_REGISTRY["arxiv_paper"]],
+            skills=[_SOURCE_EXTRACTION_FIDELITY_SKILL],
             verbose=True,
         )
 
@@ -63,6 +71,7 @@ class ResearchCrew:
                 TOOL_REGISTRY["file_read"],
                 TOOL_REGISTRY["firecrawl_scrape"],
             ],
+            skills=[_SOURCE_EXTRACTION_FIDELITY_SKILL],
             verbose=True,
         )
 

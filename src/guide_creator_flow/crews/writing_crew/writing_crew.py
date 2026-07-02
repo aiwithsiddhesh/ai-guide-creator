@@ -1,5 +1,11 @@
+from pathlib import Path
+
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
+
+_BEGINNER_GUIDE_STYLE_SKILL = str(
+    (Path(__file__).parent.parent.parent / "skills" / "beginner-guide-style").resolve()
+)
 
 
 @CrewBase
@@ -14,6 +20,7 @@ class WritingCrew:
     def content_strategist(self) -> Agent:
         return Agent(
             config=self.agents_config["content_strategist"],
+            skills=[_BEGINNER_GUIDE_STYLE_SKILL],
             verbose=True,
         )
 
@@ -21,6 +28,7 @@ class WritingCrew:
     def technical_writer(self) -> Agent:
         return Agent(
             config=self.agents_config["technical_writer"],
+            skills=[_BEGINNER_GUIDE_STYLE_SKILL],
             verbose=True,
         )
 
@@ -35,6 +43,7 @@ class WritingCrew:
     def content_editor(self) -> Agent:
         return Agent(
             config=self.agents_config["content_editor"],
+            skills=[_BEGINNER_GUIDE_STYLE_SKILL],
             verbose=True,
         )
 
