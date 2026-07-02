@@ -1,7 +1,16 @@
 from crewai import Agent, Crew, LLM, Process, Task
 from crewai.project import CrewBase, agent, crew, task
+from pydantic import BaseModel
 
 from guide_creator_flow.tool_registry import TOOL_REGISTRY
+from guide_creator_flow.tools.citation_guardrail_tool import check_citations
+
+
+class ResearchReportOutput(BaseModel):
+    """Typed shape of compile_research_report's output."""
+
+    report: str
+    sources: list[str] = []
 
 
 @CrewBase
@@ -79,7 +88,11 @@ class ResearchCrew:
 
     @task
     def compile_research_report(self) -> Task:
-        return Task(config=self.tasks_config["compile_research_report"])
+        return Task(
+            config=self.tasks_config["compile_research_report"],
+            guardrail=check_citations,
+            output_pydantic=ResearchReportOutput,
+        )
 
     # ------------------------------------------------------------------
     # Standard crew (all agents/tasks — used for crewai test + standalone)
@@ -161,6 +174,8 @@ class ResearchCrew:
             **compile_cfg,
             agent=self.research_director(),
             context=compile_context,
+            guardrail=check_citations,
+            output_pydantic=ResearchReportOutput,
         )
         active_tasks.append(compile_task)
 

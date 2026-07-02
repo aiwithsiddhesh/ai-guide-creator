@@ -17,21 +17,27 @@ plot
 # Run with a JSON trigger payload
 run_with_trigger '{"topic": "FastAPI"}'
 
-# Run all tests
+# Launch the student chatbot for a completed run
+chat <run_id>
+
+# Run all tests (no API keys required)
 uv run pytest
 
 # Run a specific test file or single test
 uv run pytest tests/crews/test_crew_wiring.py
-uv run pytest tests/flow/test_flow_nodes.py
-uv run pytest tests/flow/test_get_inputs.py
-uv run pytest tests/chatbot/test_intent_routing.py
+uv run pytest tests/flow/test_flow_end_to_end.py
+uv run pytest tests/tools/test_citation_guardrail_tool.py
 uv run pytest -k test_crew_for_sources_youtube_only
 
-# LLM output quality scoring (requires OPENAI_API_KEY in .env — evaluator only)
+# Lint / format (ruff, also runs via pre-commit)
+uv run ruff check .
+uv run ruff format .
+
+# LLM output quality scoring (requires OPENAI_API_KEY in .env — evaluator only, non-blocking in CI)
 crewai test --n_iterations 3 --model gpt-4o-mini
 ```
 
-All entry points are defined in `pyproject.toml` under `[project.scripts]` and map to `src/guide_creator_flow/main.py`.
+All entry points are defined in `pyproject.toml` under `[project.scripts]` and map to `src/guide_creator_flow/main.py` (`kickoff`/`run_crew`, `plot`, `run_with_trigger`) or `src/guide_creator_flow/chatbot.py` (`chat`). See `TESTING.md` for what each test directory covers and what is intentionally left to the LLM-judge eval instead of CI.
 
 ## Environment
 
@@ -93,10 +99,13 @@ After guide generation, **`StudentChatbotFlow`** (`chatbot.py`) provides a termi
 - **Knowledge isolation per run** — `launch_chatbot()` sets `CREWAI_STORAGE_DIR=./outputs/<run_id>/.crewai` before instantiating `StudentChatbotFlow` so each guide run gets its own LanceDB store.
 - **Knowledge sources loaded once** — `QACrew` receives `knowledge_sources` in `__init__` and reuses them across all turns; do not reload inside handlers (triggers re-embedding).
 - **`route_intent()`** — plain keyword matching in `chatbot.py`; tested independently in `tests/chatbot/test_intent_routing.py`. Priority order: end → example → clarify → question (default).
+- **Research Crew agent-capability flags** (`research_crew/config/agents.yaml`) — `max_rpm` on `web_researcher` (10) and `youtube_analyst` (15) to avoid 429s from Firecrawl/YouTube during hierarchical fan-out; `max_execution_time` (seconds) on all 4 specialists so a stuck scrape/transcript call times out instead of stalling the crew; `respect_context_window: true` on `research_director` and `academic_analyst`, which synthesize the largest context; `multimodal: true` on `document_analyst` for diagrams/screenshots in PDFs (note: `multimodal` is deprecated in `crewai==1.14.4`, slated for removal in v2.0 in favor of passing files natively); `inject_date: true` on `research_director` for date-grounded synthesis language. Verified in `tests/crews/test_crew_wiring.py::test_research_crew_agent_capability_flags`.
+- **Citation guardrail** (`tools/citation_guardrail_tool.py`) — `check_citations()` is wired as `guardrail=` on `compile_research_report` (both the static `@task` and the `crew_for_sources()` dynamic build). Deterministic, no LLM: splits the report into `##` sections and rejects (returns `(False, reason)`, triggering a CrewAI retry) unless every non-heading, non-code-fence line in `## Core Concepts` and `## Code Examples` carries a URL, a `(Source: ...)`/`(Src: ...)` tag, or a local file path.
+- **Typed compile-task output** — `compile_research_report` also sets `output_pydantic=ResearchReportOutput` (`report: str`, `sources: list[str]`, defined in `research_crew.py`), matching the CrewAI production-architecture guidance to type task outputs consumed elsewhere in the flow. `run_research_crew` in `main.py` reads `result.pydantic.report` / `.sources` (not `result.raw`) and populates `state.source_citations`. The guardrail validates the raw string first; `output_pydantic` conversion runs after, so both apply together without conflict.
 
 ### Current state
 
-- **`ResearchCrew`** — fully implemented: 5 agents with per-agent LLMs, 5 tasks, `crew_for_sources()` dynamic assembly, tools wired from `TOOL_REGISTRY`.
+- **`ResearchCrew`** — fully implemented: 5 agents with per-agent LLMs, 5 tasks, `crew_for_sources()` dynamic assembly, tools wired from `TOOL_REGISTRY`, `compile_research_report` has both `guardrail=check_citations` and `output_pydantic=ResearchReportOutput`.
 - **`EnrichmentCrew`** — fully implemented: 1 agent (`web_search_agent`, haiku), 1 task (`gap_fill_task`), sequential, `memory=False`.
 - **`WritingCrew`** — fully implemented: 4 agents (strategist, writer, reviewer with `system_template`, editor), 4 tasks with explicit context wiring, sequential, `memory=True`, `output_file` on `edit_and_publish`.
 - **`GuideGeneratorFlow`** (`main.py`) — fully implemented: `GuideFlowState`, 7 flow nodes, SSRF/path-traversal/file-size security checks, topic inference, quality gate routing, enrichment append, output file writing. `get_inputs()` interactive prompt wired into `kickoff()`.

@@ -155,6 +155,44 @@ def test_crew_for_sources_all_buckets():
 
 
 @patch("guide_creator_flow.crews.research_crew.research_crew.TOOL_REGISTRY", MOCK_REGISTRY)
+def test_compile_research_report_has_citation_guardrail():
+    """Both the static crew and crew_for_sources wire check_citations onto the compile task."""
+    from guide_creator_flow.crews.research_crew.research_crew import ResearchCrew
+    from guide_creator_flow.tools.citation_guardrail_tool import check_citations
+
+    rc = ResearchCrew()
+    assert rc.crew().tasks[-1].guardrail is check_citations
+
+    dynamic_crew = rc.crew_for_sources(
+        youtube_links=["https://www.youtube.com/watch?v=dQw4w9WgXcQ"],
+        webpage_links=[],
+        research_paper_links=[],
+        document_paths=[],
+    )
+    assert dynamic_crew.tasks[-1].guardrail is check_citations
+
+
+@patch("guide_creator_flow.crews.research_crew.research_crew.TOOL_REGISTRY", MOCK_REGISTRY)
+def test_compile_research_report_has_output_pydantic():
+    """Both the static crew and crew_for_sources type the compile task output."""
+    from guide_creator_flow.crews.research_crew.research_crew import (
+        ResearchCrew,
+        ResearchReportOutput,
+    )
+
+    rc = ResearchCrew()
+    assert rc.crew().tasks[-1].output_pydantic is ResearchReportOutput
+
+    dynamic_crew = rc.crew_for_sources(
+        youtube_links=["https://www.youtube.com/watch?v=dQw4w9WgXcQ"],
+        webpage_links=[],
+        research_paper_links=[],
+        document_paths=[],
+    )
+    assert dynamic_crew.tasks[-1].output_pydantic is ResearchReportOutput
+
+
+@patch("guide_creator_flow.crews.research_crew.research_crew.TOOL_REGISTRY", MOCK_REGISTRY)
 def test_crew_for_sources_compile_task_has_dynamic_context():
     """The compile task in crew_for_sources gets only the active specialist tasks as context."""
     from guide_creator_flow.crews.research_crew.research_crew import ResearchCrew

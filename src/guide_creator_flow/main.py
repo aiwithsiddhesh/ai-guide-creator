@@ -212,7 +212,8 @@ class GuideGeneratorFlow(Flow[GuideFlowState]):
             "research_paper_links": self.state.research_paper_links,
             "document_paths": self.state.document_paths,
         })
-        self.state.research_report = result.raw
+        self.state.research_report = result.pydantic.report
+        self.state.source_citations = result.pydantic.sources
 
     @listen(run_research_crew)
     def scrub_report(self):

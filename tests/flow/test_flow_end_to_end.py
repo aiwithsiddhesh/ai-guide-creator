@@ -3,6 +3,7 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from guide_creator_flow.crews.research_crew.research_crew import ResearchReportOutput
 from guide_creator_flow.main import GuideGeneratorFlow
 from guide_creator_flow.tools.research_quality_scorer_tool import ResearchScoreOutput
 
@@ -12,21 +13,28 @@ from guide_creator_flow.tools.research_quality_scorer_tool import ResearchScoreO
 # ---------------------------------------------------------------------------
 
 _FAKE_RESEARCH = "Research report content."
+_FAKE_SOURCES = ["https://example.com/docs"]
 _FAKE_ENRICHMENT = "Supplementary findings."
 _FAKE_GUIDE = "# Getting Started\n\nFinal guide content."
 
 
-def _crew_instance_mock(raw: str) -> MagicMock:
+def _crew_instance_mock(raw: str, pydantic=None) -> MagicMock:
     """
     Return a mock that looks like an instantiated crewAI Crew.
-    mock.kickoff(...) -> MagicMock(raw=raw)
+    mock.kickoff(...) -> MagicMock(raw=raw, pydantic=pydantic)
     mock.crew_for_sources(...) -> self  (so run_research_crew gets the same mock back)
     """
     m = MagicMock()
-    m.kickoff.return_value = MagicMock(raw=raw)
+    m.kickoff.return_value = MagicMock(raw=raw, pydantic=pydantic)
     m.crew_for_sources.return_value = m
     m.crew.return_value = m
     return m
+
+
+def _research_crew_mock(raw: str, sources: list[str]) -> MagicMock:
+    """Research Crew mock whose kickoff result carries a real ResearchReportOutput,
+    matching the output_pydantic contract on compile_research_report."""
+    return _crew_instance_mock(raw, pydantic=ResearchReportOutput(report=raw, sources=sources))
 
 
 def _setup_flow(tmp_path: Path, monkeypatch) -> GuideGeneratorFlow:
@@ -53,7 +61,7 @@ def _setup_flow(tmp_path: Path, monkeypatch) -> GuideGeneratorFlow:
 def test_full_flow_sufficient_quality_skips_enrichment(tmp_path, monkeypatch):
     flow = _setup_flow(tmp_path, monkeypatch)
 
-    research_mock = _crew_instance_mock(_FAKE_RESEARCH)
+    research_mock = _research_crew_mock(_FAKE_RESEARCH, _FAKE_SOURCES)
     enrichment_mock = _crew_instance_mock(_FAKE_ENRICHMENT)
     writing_mock = _crew_instance_mock(_FAKE_GUIDE)
 
@@ -76,6 +84,7 @@ def test_full_flow_sufficient_quality_skips_enrichment(tmp_path, monkeypatch):
         assert route == "sufficient"
         assert flow.state.research_quality_score == 8
         assert flow.state.research_report == _FAKE_RESEARCH
+        assert flow.state.source_citations == _FAKE_SOURCES
 
         # Sufficient branch — skip enrichment, go straight to writing
         flow.run_writing_crew()
@@ -99,7 +108,7 @@ def test_full_flow_sufficient_quality_skips_enrichment(tmp_path, monkeypatch):
 def test_full_flow_insufficient_quality_runs_enrichment(tmp_path, monkeypatch):
     flow = _setup_flow(tmp_path, monkeypatch)
 
-    research_mock = _crew_instance_mock(_FAKE_RESEARCH)
+    research_mock = _research_crew_mock(_FAKE_RESEARCH, _FAKE_SOURCES)
     enrichment_mock = _crew_instance_mock(_FAKE_ENRICHMENT)
     writing_mock = _crew_instance_mock(_FAKE_GUIDE)
 
@@ -121,6 +130,7 @@ def test_full_flow_insufficient_quality_runs_enrichment(tmp_path, monkeypatch):
         route = flow.evaluate_research()
 
         assert route == "insufficient"
+        assert flow.state.source_citations == _FAKE_SOURCES
         assert flow.state.research_quality_score == 4
         assert flow.state.research_gaps == [gap]
 
