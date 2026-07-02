@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from crewai import Agent, Crew, Process, Task
+from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 
 _BEGINNER_GUIDE_STYLE_SKILL = str(
@@ -79,6 +79,8 @@ class WritingCrew:
             agents=self.agents,
             tasks=self.tasks,
             process=Process.sequential,
+            planning=True,
+            planning_llm=LLM(model="anthropic/claude-sonnet-4-6"),
             verbose=True,
             memory=True,
         )

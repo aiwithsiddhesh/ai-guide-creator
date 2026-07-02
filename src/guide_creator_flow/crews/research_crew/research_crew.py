@@ -193,6 +193,8 @@ class ResearchCrew:
             tasks=active_tasks,
             process=Process.hierarchical,
             manager_llm=LLM(model="anthropic/claude-sonnet-4-6"),
+            planning=True,
+            planning_llm=LLM(model="anthropic/claude-sonnet-4-6"),
             verbose=True,
             memory=False,
         )
