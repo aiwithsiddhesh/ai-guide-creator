@@ -48,7 +48,7 @@ ANTHROPIC_API_KEY      # required — all LLM calls
 FIRECRAWL_API_KEY      # required — JS-rendered page scraping
 SERPER_API_KEY         # required — gap-fill web search (Enrichment Crew)
 VOYAGE_API_KEY         # required — embeddings for Knowledge + Memory
-DOCUMENT_INPUT_DIR     # default: inputs  — local files must be under this dir
+DOCUMENT_INPUT_DIR     # default: documents  — local files must be under this dir
 MAX_FILE_BYTES         # default: 52428800 (50 MB)
 CREWAI_STORAGE_DIR     # default: .crewai — LanceDB storage root
 ```
@@ -106,6 +106,7 @@ After guide generation, **`StudentChatbotFlow`** (`chatbot.py`) provides a termi
 - **`planning=True` on `ResearchCrew` and `WritingCrew`** — both set `planning=True` with a dedicated `planning_llm=LLM(model="anthropic/claude-sonnet-4-6")` on their `Crew(...)` construction, so CrewAI generates a step-by-step plan before executing tasks. `EnrichmentCrew` and `QACrew` do not use planning (single-agent/single-task, low value).
 - **`reasoning: true`** — set on `research_director` (`research_crew/config/agents.yaml`) and `content_strategist` (`writing_crew/config/agents.yaml`), the two agents responsible for synthesis/strategy rather than mechanical extraction or prose generation.
 - **Typed Knowledge sources in chatbot** — `_load_knowledge_sources()` in `chatbot.py` uses `TextFileKnowledgeSource` for the guide and research report, `JSONKnowledgeSource` for `metadata.json`, and `PDFKnowledgeSource` for original PDF inputs (all take `file_paths=[...]`, a list of `Path`), replacing an earlier approach that read file contents into `StringKnowledgeSource`.
+- **Delegation** (`allow_delegation`) — explicit on every `ResearchCrew` agent rather than relying on CrewAI's default. All 4 specialists (`youtube_analyst`, `web_researcher`, `academic_analyst`, `document_analyst`) are leaf workers with `allow_delegation: false`. `research_director` is also `allow_delegation: false` — it is not the hierarchical-process manager; it only executes `compile_research_report` and receives specialist outputs as task `context`. The actual delegator in `Process.hierarchical` is CrewAI's own internal manager agent, driven by `manager_llm=LLM(model="anthropic/claude-sonnet-4-6")` (no `manager_agent` is set, so no user-defined agent performs delegation). `WritingCrew` is pure `Process.sequential` with zero delegation: `content_editor` always resolves reviewer-flagged problems directly (documenting unresolved ones under "## Known Gaps") rather than delegating rewrites back to `technical_writer` — chosen because the pipeline's context wiring is one-directional (outline → draft → review → edit) and a delegation loop back to an earlier stage would break that linear, auditable structure for a case (major structural rewrites) that the beginner-reviewer's problem list is expected to catch before drafting completes.
 
 ### Current state
 

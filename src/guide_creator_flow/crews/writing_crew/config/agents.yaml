@@ -1,6 +1,7 @@
 content_strategist:
   llm: anthropic/claude-sonnet-4-6
   reasoning: true
+  allow_delegation: false
   role: >
     Content Strategist
   goal: >
@@ -13,6 +14,7 @@ content_strategist:
 
 technical_writer:
   llm: anthropic/claude-sonnet-4-6
+  allow_delegation: false
   role: >
     Technical Writer
   goal: >
@@ -25,6 +27,7 @@ technical_writer:
 
 beginner_reviewer:
   llm: anthropic/claude-haiku-4-5-20251001
+  allow_delegation: false
   role: >
     Beginner Reviewer
   goal: >
@@ -45,6 +48,14 @@ beginner_reviewer:
 
 content_editor:
   llm: anthropic/claude-sonnet-4-6
+  # Decision: content_editor always fixes reviewer-flagged problems directly and never
+  # delegates back to technical_writer, even for large structural rewrites. WritingCrew
+  # is a linear sequential pipeline (outline -> draft -> review -> edit); delegating a
+  # rewrite back to an earlier-stage agent would re-enter a task that has already
+  # completed, which breaks the pipeline's one-directional, auditable context wiring
+  # (see writing_crew.py). Anything the editor cannot fix directly is recorded under
+  # "## Known Gaps" instead of being pushed back upstream.
+  allow_delegation: false
   role: >
     Content Editor
   goal: >

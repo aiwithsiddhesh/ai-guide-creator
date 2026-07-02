@@ -104,7 +104,7 @@ def test_validate_inputs_rejects_private_ip():
 def test_validate_inputs_rejects_path_traversal():
     flow = GuideGeneratorFlow()
     flow.state.document_paths = ["../etc/passwd"]
-    with patch.dict(os.environ, {"DOCUMENT_INPUT_DIR": "inputs"}):
+    with patch.dict(os.environ, {"DOCUMENT_INPUT_DIR": "documents"}):
         with pytest.raises(ValueError, match="No valid sources"):
             flow.validate_inputs()
     assert flow.state.document_paths == []

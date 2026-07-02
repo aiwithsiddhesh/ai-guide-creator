@@ -3,6 +3,12 @@ research_director:
   respect_context_window: true
   inject_date: true
   reasoning: true
+  # Not the hierarchical-process manager (see manager_llm in research_crew.py) — this
+  # agent only executes compile_research_report and receives specialist task outputs as
+  # context. It never delegates, so allow_delegation is explicitly off. Real delegation
+  # to the 4 specialists is done by CrewAI's own internal manager agent, driven by
+  # manager_llm.
+  allow_delegation: false
   role: >
     Research Director
   goal: >
@@ -19,6 +25,7 @@ youtube_analyst:
   llm: anthropic/claude-haiku-4-5-20251001
   max_rpm: 15
   max_execution_time: 180
+  allow_delegation: false
   role: >
     YouTube Content Analyst
   goal: >
@@ -35,6 +42,7 @@ web_researcher:
   llm: anthropic/claude-haiku-4-5-20251001
   max_rpm: 10
   max_execution_time: 180
+  allow_delegation: false
   role: >
     Web Documentation Researcher
   goal: >
@@ -49,6 +57,7 @@ academic_analyst:
   llm: anthropic/claude-sonnet-4-6
   respect_context_window: true
   max_execution_time: 240
+  allow_delegation: false
   role: >
     Academic Research Analyst
   goal: >
@@ -63,6 +72,7 @@ document_analyst:
   llm: anthropic/claude-haiku-4-5-20251001
   max_execution_time: 180
   multimodal: true
+  allow_delegation: false
   role: >
     Document Content Analyst
   goal: >

@@ -25,7 +25,7 @@ SERPER_API_KEY=        # gap-fill web search
 VOYAGE_API_KEY=        # embeddings for knowledge and memory
 OPENAI_API_KEY=        # crewai test evaluator only — not used at runtime
 
-DOCUMENT_INPUT_DIR=inputs       # local files must be under this directory
+DOCUMENT_INPUT_DIR=documents    # local files must be under this directory
 MAX_FILE_BYTES=52428800         # 50 MB default — files above this are rejected
 CREWAI_STORAGE_DIR=.crewai      # LanceDB storage root for knowledge and memory
 ```
@@ -39,8 +39,8 @@ crewai run
 # Run with a JSON input payload
 run_with_trigger '{"topic": "FastAPI"}'
 
-# Example payload using the shipped sample file under inputs/
-run_with_trigger '{"topic_hint": "FastAPI", "document_paths": ["inputs/sample_notes.md"]}'
+# Example payload using the shipped sample file under documents/
+run_with_trigger '{"topic_hint": "FastAPI", "document_paths": ["documents/sample_notes.md"]}'
 
 # Launch the student chatbot for a completed run
 chat <run_id>

@@ -107,6 +107,15 @@ def test_research_crew_agent_capability_flags():
     assert agents_by_role["Academic Research Analyst"].respect_context_window is True
     assert agents_by_role["Document Content Analyst"].multimodal is True
 
+    for role in (
+        "Research Director",
+        "YouTube Content Analyst",
+        "Web Documentation Researcher",
+        "Academic Research Analyst",
+        "Document Content Analyst",
+    ):
+        assert agents_by_role[role].allow_delegation is False
+
 
 # ---------------------------------------------------------------------------
 # Research Crew — crew_for_sources (dynamic)
@@ -234,3 +243,13 @@ def test_writing_crew_memory_enabled():
     from guide_creator_flow.crews.writing_crew.writing_crew import WritingCrew
     crew = WritingCrew().crew()
     assert crew.memory is True
+
+
+def test_writing_crew_no_delegation():
+    """Writing Crew is pure sequential — every agent has delegation explicitly off,
+    including content_editor, which always fixes reviewer-flagged problems directly
+    rather than delegating rewrites back to technical_writer."""
+    from guide_creator_flow.crews.writing_crew.writing_crew import WritingCrew
+    crew = WritingCrew().crew()
+    for a in crew.agents:
+        assert a.allow_delegation is False

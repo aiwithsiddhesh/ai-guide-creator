@@ -119,7 +119,7 @@ class GuideGeneratorFlow(Flow[GuideFlowState]):
     def validate_inputs(self):
         """Sanitise inputs, check reachability, infer topic, set run_id."""
         document_input_dir = Path(
-            __import__("os").environ.get("DOCUMENT_INPUT_DIR", "inputs")
+            __import__("os").environ.get("DOCUMENT_INPUT_DIR", "documents")
         )
         max_file_bytes = int(
             __import__("os").environ.get("MAX_FILE_BYTES", 52428800)
